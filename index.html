@@ -404,6 +404,7 @@ function goTo(v,opt={}){
  $("hero").classList.toggle("hidden",v!=="accueil");
  document.querySelectorAll("[data-nav]").forEach(b=>b.classList.toggle("current",b.dataset.nav===v));
  if(opt.push!==false&&location.hash!=="#"+v)history.pushState(null,"","#"+v);
+ else if(opt.push===false&&location.hash!=="#"+v&&(!cameFromEmailLink||emailLinkHandled))history.replaceState(null,"","#"+v);
  if(opt.scroll!==false)window.scrollTo({top:0});
  if(opt.load!==false)enterView(v);
 }
