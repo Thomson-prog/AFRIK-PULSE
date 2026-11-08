@@ -461,7 +461,21 @@ async function checkUnread(force){
   showUnread(unreadConvs.size,people.size);
  }catch(e){}
 }
-setInterval(()=>{if(currentUser&&!document.hidden)checkUnread()},30000);
+let chatSig="";
+async function refreshChat(){
+ if(!activeConversation)return;
+ const {data,count,error}=await db.from("messages").select("id",{count:"exact"}).eq("conversation_id",activeConversation).order("created_at",{ascending:false}).limit(1);
+ if(error)return;
+ const sig=count+":"+(data&&data[0]?data[0].id:"");
+ if(sig===chatSig)return;
+ const first=chatSig==="";chatSig=sig;
+ if(!first)await openConversation(activeConversation,$("chatTitle").textContent);
+}
+setInterval(async()=>{
+ if(!db||!currentUser||document.hidden)return;
+ if(currentView==="messages"){await refreshChat();await loadConversations()}
+ else checkUnread();
+},5000);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkUnread()});
 // ===== Thème clair / sombre (préférence propre à chaque utilisateur) =====
 const Theme={
