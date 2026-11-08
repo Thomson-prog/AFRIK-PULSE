@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#101b35">
+<script>
+(function(){try{
+function icon(n){var c=document.createElement("canvas");c.width=c.height=n;var x=c.getContext("2d");x.fillStyle="#101b35";x.fillRect(0,0,n,n);x.fillStyle="#ff9b36";x.font="900 "+Math.round(n*.46)+"px Arial,sans-serif";x.textAlign="center";x.textBaseline="middle";x.fillText("AP",n/2,n/2+n*.02);return c.toDataURL("image/png")}
+var i192=icon(192),i512=icon(512),base=location.origin+location.pathname;
+var m={name:"AFRIKA PULSE",short_name:"AFRIKA PULSE",description:"Les bons plans et opportunités en Afrique",start_url:base,scope:base.replace(/[^\/]*$/,""),display:"standalone",background_color:"#101b35",theme_color:"#101b35",lang:"fr",icons:[{src:i192,sizes:"192x192",type:"image/png",purpose:"any"},{src:i512,sizes:"512x512",type:"image/png",purpose:"any"}]};
+var l=document.createElement("link");l.rel="manifest";l.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:"application/manifest+json"}));document.head.appendChild(l);
+var a=document.createElement("link");a.rel="apple-touch-icon";a.href=i192;document.head.appendChild(a);
+}catch(e){}})();
+</script>
 <meta name="description" content="Les bons plans et opportunités en Afrique : trouve, publie et partage des annonces près de chez toi. Gratuit et simple.">
 <link rel="canonical" href="https://thomson-prog.github.io/AFRIK-PULSE/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23101b35'/%3E%3Ctext x='50' y='68' font-size='58' font-weight='900' text-anchor='middle' fill='%23ff9b36' font-family='Arial'%3EAP%3C/text%3E%3C/svg%3E">
@@ -129,6 +138,10 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 .supportlist .sitem{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
 .supportlist .sitem h4{margin:0 0 4px}.supportlist .sitem p{white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0}
 .contactrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.card.sold{opacity:.65}.card.sold [data-contact],.card.sold .btn.wa{display:none}
+.badge-sold{background:#b42318;color:#fff;font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;margin-left:6px;vertical-align:middle}
+.sitefooter{max-width:1100px;margin:30px auto;padding:16px;text-align:center;color:var(--muted);font-size:13px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.textpage{max-width:760px}.textpage h3{margin:20px 0 6px}.textpage p,.textpage li{line-height:1.6}
 </style>
 </head>
 <body>
@@ -143,6 +156,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 <button class="btn ghost hidden" id="adminBtn" data-nav="admin">Administration</button>
 <button class="btn" id="publishJump" data-nav="publier">＋ Publier</button>
 
+<button class="btn ghost hidden" id="installBtn" type="button">📲 Installer l'application</button>
 <button class="btn ghost" id="drawerSupport" data-nav="support" type="button">💬 Support</button>
 <button class="btn danger hidden" id="drawerLogout" type="button">⎋ Se déconnecter</button></div></aside>
 <header class="top">
@@ -233,6 +247,19 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 </main>
 <footer>AFRIKA PULSE · Prototype connecté · Vérifie toujours les offres avant d'acheter.</footer>
 <div id="lightbox" role="dialog" aria-modal="true" aria-label="Photo agrandie"><button class="lbclose" id="lbClose" type="button" aria-label="Fermer">✕</button><div class="lbwrap"><img id="lbImg" alt=""></div><div class="lbcap" id="lbCap"></div></div>
+<section class="panel hidden textpage" id="aboutPanel"><div class="eyebrow">À propos</div><h2>AFRIKA PULSE</h2>
+<p>AFRIKA PULSE est un site gratuit où chacun peut trouver et publier des bons plans, offres, services et opportunités près de chez lui en Afrique.</p>
+<h3>Notre objectif</h3><p>Rapprocher les vendeurs, les commerçants et les acheteurs de manière simple, rapide et sans frais pour les particuliers.</p>
+<h3>Comment ça marche</h3><ul><li>Crée un compte avec ton e-mail.</li><li>Publie ton annonce avec une photo et ta ville.</li><li>Les personnes intéressées te contactent par messagerie ou WhatsApp.</li></ul>
+<p><button class="linkbtn" data-goto="support">Une question ? Contacte le support</button></p></section>
+<section class="panel hidden textpage" id="termsPanel"><div class="eyebrow">Règles du site</div><h2>Conditions d'utilisation</h2>
+<h3>1. Rôle du site</h3><p>AFRIKA PULSE met en relation des personnes. Le site n'est pas partie aux ventes et ne garantit ni les produits, ni les prix, ni les paiements. Reste prudent : vérifie le produit avant de payer et privilégie les rencontres dans un lieu public.</p>
+<h3>2. Contenus interdits</h3><ul><li>Arnaques, fausses annonces, usurpation d'identité.</li><li>Produits ou services illégaux, dangereux ou contrefaits.</li><li>Contenus choquants, haineux, violents ou à caractère sexuel.</li><li>Spam et publicités répétées.</li></ul>
+<h3>3. Modération</h3><p>L'administrateur peut supprimer toute annonce ou suspendre tout compte qui ne respecte pas ces règles. Tu peux signaler une annonce avec le bouton « Signaler ».</p>
+<h3>4. Tes données</h3><p>Ton adresse e-mail sert uniquement à gérer ton compte et à te répondre. Ton nom d'utilisateur est visible sur tes annonces.</p>
+<h3>5. Ta responsabilité</h3><p>Tu es responsable de ce que tu publies. En publiant, tu confirmes avoir le droit d'utiliser le texte et les photos.</p>
+<p class="muted">Modèle simple à adapter selon la loi de ton pays.</p></section>
+<div class="sitefooter"><button class="linkbtn" data-goto="apropos">À propos</button><button class="linkbtn" data-goto="conditions">Conditions d'utilisation</button><button class="linkbtn" data-goto="support">Support</button><span>© AFRIKA PULSE</span></div>
 <div class="toast" id="toast" role="status"></div>
 
 <!-- Supabase JavaScript client -->
@@ -350,6 +377,14 @@ async function loadSupportList(){
  box.innerHTML=(data||[]).length?data.map(m=>`<div class="sitem"><h4>${esc(m.subject)}</h4><div class="meta"><span>${esc(m.email)}</span><span>${new Date(m.created_at).toLocaleString("fr-FR")}</span></div><p>${esc(m.message)}</p><a class="btn ghost" href="mailto:${esc(m.email)}?subject=${encodeURIComponent("Re: "+m.subject)}">Répondre</a> <button class="btn danger" data-del-support="${esc(m.id)}" type="button">Supprimer</button></div>`).join(""):"Aucun message pour le moment.";
  box.querySelectorAll("[data-del-support]").forEach(b=>b.onclick=async()=>{if(!confirm("Supprimer ce message ?"))return;await db.from("support_messages").delete().eq("id",b.dataset.delSupport);loadSupportList()});
 }
+
+// ===== Pages, installation =====
+document.addEventListener("click",e=>{const g=e.target.closest("[data-goto]");if(g)goTo(g.dataset.goto)});
+let installEvt=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;$("installBtn").classList.remove("hidden")});
+$("installBtn").onclick=async()=>{if(!installEvt)return;installEvt.prompt();await installEvt.userChoice;installEvt=null;$("installBtn").classList.add("hidden")};
+window.addEventListener("appinstalled",()=>$("installBtn").classList.add("hidden"));
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 // ===== Thème clair / sombre (préférence propre à chaque utilisateur) =====
 const Theme={
  key(){return currentUser?`ap-theme:${currentUser.id}`:"ap-theme"},
@@ -425,7 +460,7 @@ async function uploadOfferImage(file){
  if(error)throw error;
  return db.storage.from("offer-images").getPublicUrl(path).data.publicUrl;
 }
-const VIEWS={accueil:"homeView",compte:"authPanel",publier:"publishPanel",publications:"myPostsPanel",support:"supportPanel",reinitialiser:"resetPanel",messages:"messagesPanel",admin:"adminPanel"};
+const VIEWS={accueil:"homeView",compte:"authPanel",publier:"publishPanel",publications:"myPostsPanel",support:"supportPanel",apropos:"aboutPanel",conditions:"termsPanel",reinitialiser:"resetPanel",messages:"messagesPanel",admin:"adminPanel"};
 const PROTECTED=["publications","messages","admin"];
 let currentView="accueil",autoAuthDone=false,sessionChecked=false;
 function afterEmailConfirm(){
@@ -472,7 +507,7 @@ $("adminBtn").onclick=()=>{if(!requireLogin()||!isAdmin)return;goTo("admin")};
 $("refreshBtn").onclick=loadOffers;
 $("cityFilter").addEventListener("change",renderOffers);$("sortSelect").addEventListener("change",renderOffers);
 $("search").addEventListener("input",renderOffers);$("searchBtn").onclick=renderOffers;
-$("filters").addEventListener("click",e=>{const b=e.target.closest("[data-category]");if(!b)return;category=b.dataset.category;document.querySelectorAll(".chip").forEach(x=>x.classList.toggle("active",x===b));renderOffers()});
+$("filters").addEventListener("click",e=>{const b=e.target.closest("[data-category]");if(!b)return;category=b.dataset.category;authorFilter=null;document.querySelectorAll(".chip").forEach(x=>x.classList.toggle("active",x===b));renderOffers()});
 function requireLogin(){if(!currentUser){toast("Connecte-toi ou crée un compte pour continuer.");goTo("compte");return false}return true}
 
 async function consumeEmailLinkTokens(){
@@ -574,8 +609,11 @@ async function loadOffers(){
  $("offers").innerHTML='<div class="empty">Chargement…</div>';
  const {data,error}=await db.from("bons_plans").select("*").eq("status","approved").order("created_at",{ascending:false});
  if(error){$("offers").innerHTML=`<div class="empty">${siteLanguage()==="en"?"Unable to load deals: ":"Impossible de charger les bons plans : "}${esc(localizedError(error))}</div>`;return}
- allOffers=data||[];fillCities();renderOffers();
+ allOffers=data||[];
+ try{const ids=[...new Set(allOffers.map(o=>o.user_id).filter(Boolean))];if(ids.length){const r=await db.from("profiles").select("id,username").in("id",ids);(r.data||[]).forEach(p=>profiles[p.id]=p.username)}}catch(e){}
+ fillCities();renderOffers();
 }
+let authorFilter=null;const profiles={};
 function favKey(){return "ap-fav:"+(currentUser?currentUser.id:"guest")}
 function favs(){try{return new Set(JSON.parse(localStorage.getItem(favKey())||"[]").map(String))}catch(e){return new Set()}}
 function toggleFav(id){const f=favs();id=String(id);f.has(id)?f.delete(id):f.add(id);try{localStorage.setItem(favKey(),JSON.stringify([...f]))}catch(e){}renderOffers()}
@@ -603,16 +641,19 @@ function renderOffers(){
  const city=$("cityFilter").value,favSet=favs();
  let items=allOffers.filter(o=>(category==="Tous"||(category==="Favoris"?favSet.has(String(o.id)):o.category===category))&&(!city||String(o.place||"").trim().toLowerCase()===city)&&(!q||[o.title,o.description,o.place,o.category].join(" ").toLowerCase().includes(q)));
  items=sortOffers(items);
+ if(authorFilter)items=items.filter(o=>o.user_id===authorFilter);
+ items=[...items].sort((a,b)=>(b.featured?1:0)-(a.featured?1:0));
  $("count").textContent=items.length+" bon(s) plan(s) affiché(s)";
  $("offers").innerHTML=items.length?items.map(o=>{
  const link=safeUrl(o.url),mine=currentUser&&o.user_id===currentUser.id,waNum=String(o.whatsapp||"").replace(/\D/g,""),faved=favSet.has(String(o.id));
  const wa=waNum.length>=8&&waNum.length<=15?`<a class="btn wa" href="https://wa.me/${waNum}?text=${encodeURIComponent("Bonjour, je suis intéressé(e) par « "+o.title+" » sur AFRIKA PULSE.")}" target="_blank" rel="noopener noreferrer">💬 WhatsApp</a>`:"";
- return `<article class="card">${o.image_url?`<img class="offer-photo" src="${esc(o.image_url)}" alt="Photo de ${esc(o.title)}" loading="lazy">`:`<div class="visual"><span class="tag">${esc(o.category)}</span><span>${esc(icons[o.category]||"✨")}</span></div>`}<div class="cardbody"><h3>${esc(o.title)}</h3><p class="desc">${esc(o.description)}</p><div class="price">${esc(o.price||"Voir les détails")}</div><div class="meta"><span>📍 ${esc(o.place)}</span><span>Communauté</span></div>${link?`<a class="btn ghost" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Voir l'offre ↗</a>`:""}<div class="cardactions">${mine?'<button class="btn ghost" data-edit="'+esc(o.id)+'">Modifier</button><button class="btn danger" data-delete="'+esc(o.id)+'">Supprimer</button>':'<button class="btn dark" data-contact="'+esc(o.id)+'">Contacter l’auteur</button>'}${wa}<button class="btn ghost${faved?' faved':''}" data-fav="${esc(o.id)}">${faved?'❤️ Favori':'🤍 Favori'}</button>${mine?'':'<button class="btn ghost" data-report="'+esc(o.id)+'">🚩 Signaler</button>'}${isAdmin&&!mine?'<button class="btn danger" data-admin-del="'+esc(o.id)+'">🛡️ Supprimer (admin)</button>':''}</div></div></article>`;
+ return `<article class="card${o.sold?' sold':''}">${o.image_url?`<img class="offer-photo" src="${esc(o.image_url)}" alt="Photo de ${esc(o.title)}" loading="lazy">`:`<div class="visual"><span class="tag">${esc(o.category)}</span><span>${esc(icons[o.category]||"✨")}</span></div>`}<div class="cardbody"><h3>${o.featured?'⭐ ':''}${esc(o.title)}${o.sold?'<span class="badge-sold">VENDU</span>':''}</h3><p class="desc">${esc(o.description)}</p><div class="price">${esc(o.price||"Voir les détails")}</div><div class="meta"><span>📍 ${esc(o.place)}</span><span>${o.user_id?`<button class="linkbtn" data-author="${esc(o.user_id)}" type="button">👤 ${esc(profiles[o.user_id]||"Membre")}</button>`:"Communauté"}</span></div>${link?`<a class="btn ghost" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Voir l'offre ↗</a>`:""}<div class="cardactions">${mine?'<button class="btn ghost" data-edit="'+esc(o.id)+'">Modifier</button><button class="btn danger" data-delete="'+esc(o.id)+'">Supprimer</button>':'<button class="btn dark" data-contact="'+esc(o.id)+'">Contacter l’auteur</button>'}${wa}<button class="btn ghost${faved?' faved':''}" data-fav="${esc(o.id)}">${faved?'❤️ Favori':'🤍 Favori'}</button>${mine?'':'<button class="btn ghost" data-report="'+esc(o.id)+'">🚩 Signaler</button>'}${isAdmin&&!mine?'<button class="btn danger" data-admin-del="'+esc(o.id)+'">🛡️ Supprimer (admin)</button>':''}</div></div></article>`;
  }).join(""):'<div class="empty">Aucun bon plan trouvé pour le moment.</div>';
  $("offers").querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>editOffer(b.dataset.edit));
  $("offers").querySelectorAll("[data-delete]").forEach(b=>b.onclick=()=>deleteOffer(b.dataset.delete));
  $("offers").querySelectorAll("[data-contact]").forEach(b=>b.onclick=()=>startConversation(b.dataset.contact));
  $("offers").querySelectorAll("[data-admin-del]").forEach(b=>b.onclick=()=>deleteOffer(b.dataset.adminDel,true));
+ $("offers").querySelectorAll("[data-author]").forEach(b=>b.onclick=()=>{authorFilter=b.dataset.author;toast("Annonces de "+(profiles[authorFilter]||"ce membre")+". Touche « Tout voir » pour revenir.");renderOffers();window.scrollTo({top:0})});
  $("offers").querySelectorAll("[data-fav]").forEach(b=>b.onclick=()=>toggleFav(b.dataset.fav));
  $("offers").querySelectorAll("[data-report]").forEach(b=>b.onclick=()=>reportOffer(b.dataset.report));
 }
@@ -637,7 +678,12 @@ $("offerForm").addEventListener("submit",async e=>{
 async function loadMyPosts(){
  const {data,error}=await db.from("bons_plans").select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false});
  if(error){$("myPosts").innerHTML='<div class="empty">'+esc(localizedError(error))+'</div>';return}
- $("myPosts").innerHTML=(data||[]).length?data.map(o=>`<article class="card"><div class="cardbody"><span class="status ${o.status}">${o.status==="approved"?"Publié":o.status==="rejected"?"Refusé":"En attente"}</span><h3>${esc(o.title)}</h3><p class="desc">${esc(o.description)}</p><div class="cardactions"><button class="btn ghost" data-myedit="${esc(o.id)}">Modifier</button><button class="btn danger" data-mydelete="${esc(o.id)}">Supprimer</button></div></div></article>`).join(""):'<div class="empty">Tu n’as pas encore publié de bon plan.</div>';
+ $("myPosts").innerHTML=(data||[]).length?data.map(o=>`<article class="card"><div class="cardbody"><span class="status ${o.status}">${o.status==="approved"?"Publié":o.status==="rejected"?"Refusé":"En attente"}</span><h3>${esc(o.title)}</h3><p class="desc">${esc(o.description)}</p><div class="cardactions"><button class="btn light" data-mysold="${esc(o.id)}" data-sold="${o.sold?1:0}">${o.sold?"Remettre en vente":"Marquer vendue"}</button><button class="btn ghost" data-myedit="${esc(o.id)}">Modifier</button><button class="btn danger" data-mydelete="${esc(o.id)}">Supprimer</button></div></div></article>`).join(""):'<div class="empty">Tu n’as pas encore publié de bon plan.</div>';
+ $("myPosts").querySelectorAll("[data-mysold]").forEach(b=>b.onclick=async()=>{
+  const {data:d,error:er}=await db.from("bons_plans").update({sold:b.dataset.sold!=="1"}).eq("id",b.dataset.mysold).eq("user_id",currentUser.id).select();
+  if(er||!d||!d.length)return toast("Cette option n'est pas encore activée sur le site.");
+  toast(b.dataset.sold==="1"?"Remise en vente.":"Marquée comme vendue.");await loadOffers();await loadMyPosts();
+ });
  $("myPosts").querySelectorAll("[data-myedit]").forEach(b=>b.onclick=()=>editOffer(b.dataset.myedit));
  $("myPosts").querySelectorAll("[data-mydelete]").forEach(b=>b.onclick=()=>deleteOffer(b.dataset.mydelete));
 }
@@ -646,7 +692,12 @@ async function loadAdminPosts(){
  loadSupportList();
  const {data,error}=await db.from("bons_plans").select("*").order("created_at",{ascending:false});
  if(error){$("adminPosts").innerHTML='<div class="empty">'+esc(localizedError(error))+'</div>';return}
- $("adminPosts").innerHTML=(data||[]).length?data.map(o=>`<article class="card">${o.image_url?`<img class="offer-photo" src="${esc(o.image_url)}" alt="Photo de ${esc(o.title)}" loading="lazy">`:''}<div class="cardbody"><span class="status ${esc(o.status)}">${o.status==="approved"?"Publié":o.status==="rejected"?"Refusé":"En attente"}</span><h3>${esc(o.title)}</h3><p class="desc">${esc(o.description)}</p><div class="meta"><span>📍 ${esc(o.place)}</span><span>Auteur : ${esc(o.user_id)}</span></div><div class="cardactions"><button class="btn danger" data-admin-delete="${esc(o.id)}">Supprimer cette publication</button></div></div></article>`).join(""):'<div class="empty">Aucune publication.</div>';
+ $("adminPosts").innerHTML=(data||[]).length?data.map(o=>`<article class="card">${o.image_url?`<img class="offer-photo" src="${esc(o.image_url)}" alt="Photo de ${esc(o.title)}" loading="lazy">`:''}<div class="cardbody"><span class="status ${esc(o.status)}">${o.status==="approved"?"Publié":o.status==="rejected"?"Refusé":"En attente"}</span><h3>${esc(o.title)}</h3><p class="desc">${esc(o.description)}</p><div class="meta"><span>📍 ${esc(o.place)}</span><span>Auteur : ${esc(o.user_id)}</span></div><div class="cardactions"><button class="btn light" data-feature="${esc(o.id)}" data-on="${o.featured?1:0}">${o.featured?"Retirer ⭐":"Mettre en avant ⭐"}</button><button class="btn danger" data-admin-delete="${esc(o.id)}">Supprimer cette publication</button></div></div></article>`).join(""):'<div class="empty">Aucune publication.</div>';
+ $("adminPosts").querySelectorAll("[data-feature]").forEach(b=>b.onclick=async()=>{
+  const {data:d,error:er}=await db.from("bons_plans").update({featured:b.dataset.on!=="1"}).eq("id",b.dataset.feature).select();
+  if(er||!d||!d.length)return toast("Option non activée : lance la partie 6 de supabase_ajouts.sql.");
+  toast(b.dataset.on==="1"?"Retirée de la une.":"Annonce mise en avant ⭐");await loadOffers();await loadAdminPosts();
+ });
  $("adminPosts").querySelectorAll("[data-admin-delete]").forEach(b=>b.onclick=()=>deleteOffer(b.dataset.adminDelete,true));
 }
 async function editOffer(id){
