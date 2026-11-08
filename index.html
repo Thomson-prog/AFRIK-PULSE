@@ -160,6 +160,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 <button class="btn" id="publishJump" data-nav="publier">＋ Publier</button>
 
 <button class="btn ghost hidden" id="installBtn" type="button">📲 Installer l'application</button>
+<button class="btn ghost hidden" id="notifBtn" type="button">🔔 Activer les notifications</button>
 <button class="btn ghost" id="drawerSupport" data-nav="support" type="button">💬 Support</button>
 <button class="btn danger hidden" id="drawerLogout" type="button">⎋ Se déconnecter</button></div></aside>
 <header class="top">
@@ -396,11 +397,40 @@ function seenMap(){try{return JSON.parse(localStorage.getItem(seenKey())||"{}")}
 function markSeen(convId,msgs){
  const list=msgs||[];if(!list.length)return;
  const last=list.reduce((a,m)=>Math.max(a,Date.parse(m.created_at)||0),0);
- const map=seenMap();map[convId]=Math.max(Date.parse(map[convId])||0,last);
+ const map=seenMap();map[convId]=Math.max(Number(map[convId])||0,last);
  try{localStorage.setItem(seenKey(),JSON.stringify(map))}catch(e){}
  checkUnread(true);
 }
+const baseTitle=document.title;
+function notifyNew(n){
+ if(!("Notification" in window)||Notification.permission!=="granted")return;
+ const title="AFRIKA PULSE",opts={body:n>1?`Tu as des nouveaux messages dans ${n} conversations.`:"Tu as un nouveau message.",tag:"ap-msg",icon:(document.querySelector("link[rel=apple-touch-icon]")||{}).href};
+ try{const x=new Notification(title,opts);x.onclick=()=>{window.focus();goTo("messages");x.close()}}
+ catch(e){navigator.serviceWorker&&navigator.serviceWorker.getRegistration().then(r=>{if(r)r.showNotification(title,opts)}).catch(()=>{})}
+}
+function refreshNotifBtn(){$("notifBtn").classList.toggle("hidden",!("Notification" in window)||Notification.permission!=="default")}
+const VAPID_PUBLIC="BP3t1GOqi70yrT0fOa2tR2O6D2aiuPqgh289ghdO5utlCl2-ACHvYJK8CpfC9plQXmFsRUtObPilwEq-lFVf174";
+function b64ToU8(b){const p="=".repeat((4-b.length%4)%4),raw=atob((b+p).replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
+let pushSavedFor=null;
+async function savePushSubscription(show){
+ try{
+  if(!currentUser||!("serviceWorker" in navigator)||!("PushManager" in window))throw new Error("non pris en charge par ce navigateur");
+  const reg=await navigator.serviceWorker.ready;
+  let sub=await reg.pushManager.getSubscription();
+  if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToU8(VAPID_PUBLIC)});
+  const j=sub.toJSON();
+  const {error}=await db.from("push_subscriptions").upsert({user_id:currentUser.id,endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth},{onConflict:"user_id,endpoint"});
+  if(error)throw error;
+  pushSavedFor=currentUser.id;if(show)toast("Notifications activées, même quand le site est fermé.");
+ }catch(e){if(show)toast("Activation impossible : "+(e.message||e))}
+}
+async function removePushSubscription(){
+ try{const reg=await navigator.serviceWorker.getRegistration();const sub=reg&&await reg.pushManager.getSubscription();if(sub&&currentUser)await db.from("push_subscriptions").delete().eq("endpoint",sub.endpoint).eq("user_id",currentUser.id)}catch(e){}
+}
+$("notifBtn").onclick=async()=>{const p=await Notification.requestPermission();refreshNotifBtn();if(p!=="granted")return toast("Notifications refusées dans le navigateur.");await savePushSubscription(true)};
+refreshNotifBtn();
 function showUnread(n,people){
+ document.title=(n>0?`(${people}) `:"")+baseTitle;
  $("menuBtn").classList.toggle("has-dot",n>0);
  const b=$("messagesBtn");
  b.innerHTML="Mes messages"+(n>0?`<span class="countbadge" title="${people} personne(s) t'ont écrit">${people}</span>`:"");
@@ -421,8 +451,13 @@ async function checkUnread(force){
    const t=newest[c.id];if(!t)return;
    const viewing=currentView==="messages"&&c.id===activeConversation;
    if(viewing){const mp=seenMap();mp[c.id]=t;try{localStorage.setItem(seenKey(),JSON.stringify(mp))}catch(e){}return}
-   if(t>(Date.parse(seen[c.id])||0)){unreadConvs.add(c.id);people.add(c.buyer_id===currentUser.id?c.seller_id:c.buyer_id)}
+   if(t>(Number(seen[c.id])||0)){unreadConvs.add(c.id);people.add(c.buyer_id===currentUser.id?c.seller_id:c.buyer_id)}
   });
+  const nk="ap-notif:"+currentUser.id;let nmap=null;try{nmap=JSON.parse(localStorage.getItem(nk))}catch(e){}
+  const first=!nmap;nmap=nmap||{};const fresh=[];
+  convs.forEach(c=>{const t=newest[c.id];if(!t)return;if(t>(Number(nmap[c.id])||0)){if(!first&&unreadConvs.has(c.id))fresh.push(c);nmap[c.id]=t}});
+  try{localStorage.setItem(nk,JSON.stringify(nmap))}catch(e){}
+  if(fresh.length)notifyNew(fresh.length);
   showUnread(unreadConvs.size,people.size);
  }catch(e){}
 }
@@ -581,6 +616,7 @@ function updateAuthUI(){
  $("homeBtn").classList.toggle("hidden",!currentUser);
  $("menuBtn").classList.toggle("hidden",!currentUser);
  if(typeof checkUnread==="function")checkUnread();
+ if(currentUser&&typeof savePushSubscription==="function"&&"Notification" in window&&Notification.permission==="granted"&&pushSavedFor!==currentUser.id)savePushSubscription(false);
  if(currentUser){$("signupBox").classList.add("hidden");$("loginBox").classList.add("hidden");$("signupNotice").classList.add("hidden")}
  else if($("signupBox").classList.contains("hidden")&&$("loginBox").classList.contains("hidden"))$("signupBox").classList.remove("hidden");
  if(currentUser&&sessionChecked&&currentView==="compte")goTo("accueil",{push:false});
@@ -645,7 +681,7 @@ $("resetForm").addEventListener("submit",async e=>{
  if(error)return toast(localizedError(error));
  form.reset();toast("Mot de passe modifié.");goTo("accueil");
 });
-$("logoutBtn").onclick=async()=>{await db.auth.signOut();currentUser=null;isAdmin=false;updateAuthUI();$("adminPanel").classList.add("hidden");activeConversation=null;toast("Déconnexion effectuée.");goTo("compte");await loadOffers()};
+$("logoutBtn").onclick=async()=>{await removePushSubscription();pushSavedFor=null;await db.auth.signOut();currentUser=null;isAdmin=false;updateAuthUI();$("adminPanel").classList.add("hidden");activeConversation=null;toast("Déconnexion effectuée.");goTo("compte");await loadOffers()};
 if(db)db.auth.onAuthStateChange(async(_event,session)=>{currentUser=session?.user||null;sessionChecked=true;updateAuthUI();if(_event==="PASSWORD_RECOVERY")goTo("reinitialiser",{push:false});afterEmailConfirm();await loadAdminRole();});
 
 async function loadOffers(){
