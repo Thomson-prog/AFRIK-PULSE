@@ -232,6 +232,9 @@ window.fetch=async function(input,init){
  try{return await nativeFetch(input,init);}
  finally{if(isSupabaseRequest)endNetworkActivity();}
 };
+// Arrivée depuis le lien de confirmation e-mail ?
+const cameFromEmailLink=/access_token=|type=signup|type=email|[?&]code=/.test(location.hash+location.search);
+let emailLinkHandled=false;
 const db = configured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY) : null;
 
 let currentUser = null, allOffers = [], category = "Tous", activeConversation = null, editingImageUrl = "", isAdmin = false;
@@ -345,6 +348,13 @@ async function uploadOfferImage(file){
 const VIEWS={accueil:"homeView",compte:"authPanel",publier:"publishPanel",publications:"myPostsPanel",messages:"messagesPanel",admin:"adminPanel"};
 const PROTECTED=["publications","messages","admin"];
 let currentView="accueil",autoAuthDone=false,sessionChecked=false;
+function afterEmailConfirm(){
+ if(!cameFromEmailLink||emailLinkHandled||!currentUser)return;
+ emailLinkHandled=true;
+ goTo("accueil",{push:false});
+ history.replaceState(null,"",location.pathname+"#accueil");
+ toast("Compte confirmé. Bienvenue !");
+}
 function enterView(v){
  if(!currentUser)return;
  if(v==="publications")loadMyPosts();
@@ -388,6 +398,7 @@ async function refreshSession(){
  else if(!currentUser&&PROTECTED.includes(currentView))goTo("compte",{push:false});
  else if(currentView==="admin"&&!isAdmin)goTo("accueil",{push:false});
  else enterView(currentView);
+ afterEmailConfirm();
 }
 function updateAuthUI(){
  $("authStatus").textContent=currentUser?"Connecté":"Non connecté";
@@ -446,7 +457,7 @@ $("loginForm").addEventListener("submit",async e=>{
  form.reset();await refreshSession();toast("Connexion réussie.");goTo("accueil");await loadOffers();
 });
 $("logoutBtn").onclick=async()=>{await db.auth.signOut();currentUser=null;isAdmin=false;updateAuthUI();$("adminPanel").classList.add("hidden");activeConversation=null;toast("Déconnexion effectuée.");goTo("compte");await loadOffers()};
-if(db)db.auth.onAuthStateChange(async(_event,session)=>{currentUser=session?.user||null;sessionChecked=true;updateAuthUI();await loadAdminRole();});
+if(db)db.auth.onAuthStateChange(async(_event,session)=>{currentUser=session?.user||null;sessionChecked=true;updateAuthUI();afterEmailConfirm();await loadAdminRole();});
 
 async function loadOffers(){
  if(!db)return refreshSession();
