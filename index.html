@@ -1,172 +1,557 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101b35">
-  <title>AFRIKA PULSE — Les bons plans près de toi</title>
-  <style>
-    :root{--navy:#101b35;--navy2:#182849;--orange:#ff9b36;--cream:#f6f7fb;--muted:#69748a;--white:#fff;--line:#e7eaf1;--green:#16845b}
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--cream);color:var(--navy)}
-    button,input,select,textarea{font:inherit}
-    button{cursor:pointer}
-    .top{background:var(--navy);color:white;padding:18px 5vw 42px}
-    .nav{max-width:1120px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:16px}
-    .brand{font-weight:900;letter-spacing:1.4px;font-size:21px}.brand span{color:var(--orange)}
-    .nav small{color:#c4cce0}
-    .hero{max-width:1120px;margin:38px auto 0}
-    .eyebrow{color:var(--orange);font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase}
-    h1{font-size:clamp(32px,6vw,56px);line-height:1.04;margin:12px 0;max-width:720px}
-    .hero p{color:#c4cce0;max-width:590px;line-height:1.6;margin-bottom:24px}
-    .searchbar{display:flex;max-width:650px;background:white;padding:6px;border-radius:14px;gap:6px}
-    .searchbar input{border:0;outline:0;min-width:0;flex:1;padding:12px;color:var(--navy)}
-    .btn{border:0;border-radius:11px;padding:12px 17px;font-weight:800;background:var(--orange);color:#271a0c}
-    .btn.dark{background:var(--navy);color:white}
-    .btn.light{background:#fff0df;color:#8a4b0c}
-    main{max-width:1120px;margin:30px auto;padding:0 5vw 60px}
-    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}
-    h2{font-size:23px;margin:0}.muted{color:var(--muted);font-size:14px}
-    .filters{display:flex;gap:8px;overflow:auto;padding:3px 0 13px}
-    .chip{white-space:nowrap;border:1px solid var(--line);background:white;color:#4b5870;border-radius:999px;padding:9px 14px;font-size:13px;font-weight:700}
-    .chip.active{background:var(--navy);color:white;border-color:var(--navy)}
-    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}
-    .card{background:white;border:1px solid var(--line);border-radius:17px;overflow:hidden;display:flex;flex-direction:column;min-width:0;box-shadow:0 5px 18px #16264708}
-    .visual{height:130px;display:flex;align-items:center;justify-content:center;font-size:46px;background:linear-gradient(135deg,#fff0df,#f7d7b4);position:relative}
-    .visual.blue{background:linear-gradient(135deg,#e4edff,#c8d8fa)}.visual.green{background:linear-gradient(135deg,#e0f5e9,#b9e5ce)}.visual.purple{background:linear-gradient(135deg,#f0e8ff,#d9cafa)}
-    .tag{position:absolute;top:12px;left:12px;background:white;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:800}
-    .fav{position:absolute;right:12px;top:10px;border:0;background:white;border-radius:50%;width:34px;height:34px;font-size:18px}
-    .cardbody{padding:15px;display:flex;flex-direction:column;gap:8px;flex:1}
-    .card h3{font-size:17px;margin:0}.desc{font-size:13px;color:var(--muted);line-height:1.45;margin:0}
-    .meta{font-size:12px;color:#68748b;display:flex;justify-content:space-between;gap:8px;margin-top:auto;padding-top:7px}
-    .price{font-weight:900;color:var(--green);font-size:15px}
-    .cardlink{margin-top:5px;text-decoration:none;text-align:center;background:#f1f3f8;color:var(--navy);padding:10px;border-radius:10px;font-size:13px;font-weight:800}
-    .empty{grid-column:1/-1;text-align:center;background:white;border:1px dashed #cbd2df;border-radius:15px;padding:35px;color:var(--muted)}
-    .sectionhead{display:flex;justify-content:space-between;align-items:end;gap:12px;margin:27px 0 14px}
-    .publish{margin-top:38px;background:white;border:1px solid var(--line);border-radius:20px;padding:23px}
-    .publish p{color:var(--muted);font-size:14px}
-    form{display:grid;grid-template-columns:1fr 1fr;gap:13px}
-    label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:750}
-    label.full{grid-column:1/-1}
-    input,select,textarea{border:1px solid #dce1eb;border-radius:10px;padding:11px;background:white;outline-color:var(--orange);width:100%;color:var(--navy)}
-    textarea{min-height:82px;resize:vertical}
-    .formend{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-    .note{font-size:12px;color:var(--muted);line-height:1.5}
-    footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
-    .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--navy);color:white;padding:12px 18px;border-radius:12px;box-shadow:0 8px 30px #0003;display:none;z-index:5}
-    @media(max-width:850px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:560px){.top{padding-bottom:32px}.hero{margin-top:30px}.grid{grid-template-columns:1fr}.visual{height:115px}main{padding-left:4vw;padding-right:4vw}form{grid-template-columns:1fr}label.full,.formend{grid-column:1}.searchbar .btn{padding:11px}.nav small{display:none}.publish{padding:17px}}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101b35">
+<script>
+(function(){try{var u=localStorage.getItem("ap-theme-last")||localStorage.getItem("ap-theme");
+var t=(u==="dark"||u==="light")?u:(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+document.documentElement.setAttribute("data-theme",t);}catch(e){}})();
+</script>
+<title>AFRIKA PULSE — Les bons plans près de toi</title>
+<style>
+:root{--navy:#101b35;--navy2:#182849;--orange:#ff9b36;--cream:#f6f7fb;--muted:#69748a;--white:#fff;--line:#e7eaf1;--green:#16845b;--red:#b42318;
+--bg:#f6f7fb;--surface:#fff;--surface2:#fafbfe;--text:#101b35;--chip-text:#4b5870;--input-border:#dce1eb;
+--btn-dark:#101b35;--btn-dark-text:#fff;--ghost-bg:#eef1f7;--light-bg:#fff0df;--light-text:#8a4b0c;--danger-bg:#fee4e2;
+--bubble:#e9edf5;--bubble-mine:#ffebd6;--dash:#cbd2df;--ok-bg:#e8f7ee;--ok-line:#b9e5ce;--ok-text:#126b49;--status-rej:#a12b23;color-scheme:light}
+:root[data-theme=dark]{--bg:#0b1222;--surface:#141f38;--surface2:#101a30;--text:#e8ecf6;--muted:#9aa5bd;--line:#26344f;--chip-text:#b7c1d8;--input-border:#2d3c5a;
+--btn-dark:#ff9b36;--btn-dark-text:#271a0c;--ghost-bg:#1f2d4a;--light-bg:#3a2a16;--light-text:#ffc88a;--danger-bg:#3d1c1a;--red:#ff8a80;--green:#3ecf93;
+--bubble:#1f2d4a;--bubble-mine:#4a3317;--dash:#34446a;--ok-bg:#12332a;--ok-line:#1d5a45;--ok-text:#6fe0b3;--status-rej:#ff9a92;color-scheme:dark}
+:root[data-theme=dark] .visual{background:linear-gradient(135deg,#3a2a16,#27200f)}
+:root[data-theme=dark] .visual.blue{background:linear-gradient(135deg,#1b2a4d,#162243)}
+:root[data-theme=dark] .visual.green{background:linear-gradient(135deg,#12332a,#0f2a22)}
+:root[data-theme=dark] .visual.purple{background:linear-gradient(135deg,#2a1f4a,#211a3c)}
+:root[data-theme=dark] .status{background:#3a2a16;color:#ffc88a}
+:root[data-theme=dark] .status.approved{background:#12332a;color:#6fe0b3}
+:root[data-theme=dark] .status.rejected{background:#3d1c1a;color:#ff9a92}
+:root[data-theme=dark] .searchbar .btn{color:#271a0c}
+.theme-toggle{display:inline-flex;align-items:center;gap:6px}
+body,.card,.panel,.chip,input,select,textarea,.searchbar{transition:background-color .2s,color .2s,border-color .2s}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}button{cursor:pointer}.top{background:var(--navy);color:white;padding:18px 5vw 42px}
+.nav{max-width:1120px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{font-weight:900;letter-spacing:1.4px;font-size:21px}.brand span{color:var(--orange)}.nav small{color:#c4cce0}
+.navactions{display:flex;gap:8px;flex-wrap:wrap}.hero{max-width:1120px;margin:38px auto 0}
+.eyebrow{color:var(--orange);font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase}
+h1{font-size:clamp(32px,6vw,56px);line-height:1.04;margin:12px 0;max-width:720px}
+.hero p{color:#c4cce0;max-width:590px;line-height:1.6;margin-bottom:24px}
+.searchbar{display:flex;max-width:650px;background:var(--surface);padding:6px;border-radius:14px;gap:6px}
+.searchbar input{border:0;outline:0;min-width:0;flex:1;padding:12px;color:var(--text);background:transparent}
+.btn{border:0;border-radius:11px;padding:11px 15px;font-weight:800;background:var(--orange);color:#271a0c}
+.btn.dark{background:var(--btn-dark);color:var(--btn-dark-text)}.btn.light{background:var(--light-bg);color:var(--light-text)}.btn.ghost{background:var(--ghost-bg);color:var(--text)}.btn.danger{background:var(--danger-bg);color:var(--red)}
+main{max-width:1120px;margin:30px auto;padding:0 5vw 60px}h2{font-size:23px;margin:0}.muted{color:var(--muted);font-size:14px}
+.toolbar,.sectionhead{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.filters{display:flex;gap:8px;overflow:auto;padding:3px 0 13px}
+.chip{white-space:nowrap;border:1px solid var(--line);background:var(--surface);color:var(--chip-text);border-radius:999px;padding:9px 14px;font-size:13px;font-weight:700}
+.chip.active{background:var(--btn-dark);color:var(--btn-dark-text);border-color:var(--btn-dark)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:17px;overflow:hidden;display:flex;flex-direction:column;min-width:0;box-shadow:0 5px 18px #16264708}
+.visual{height:110px;display:flex;align-items:center;justify-content:center;font-size:42px;background:linear-gradient(135deg,#fff0df,#f7d7b4);position:relative}
+.visual.blue{background:linear-gradient(135deg,#e4edff,#c8d8fa)}.visual.green{background:linear-gradient(135deg,#e0f5e9,#b9e5ce)}.visual.purple{background:linear-gradient(135deg,#f0e8ff,#d9cafa)}
+.tag{position:absolute;top:12px;left:12px;color:var(--text);background:var(--surface);border-radius:999px;padding:6px 10px;font-size:11px;font-weight:800}
+.offer-photo{width:100%;height:190px;object-fit:cover;display:block;background:var(--ghost-bg)}.photo-preview{max-width:220px;max-height:160px;object-fit:cover;border-radius:10px;border:1px solid var(--line);margin-top:8px}.cardbody{padding:15px;display:flex;flex-direction:column;gap:8px;flex:1}.card h3{font-size:17px;margin:0}.desc{font-size:13px;color:var(--muted);line-height:1.45;margin:0}
+.meta{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:8px;margin-top:auto;padding-top:7px;flex-wrap:wrap}
+.price{font-weight:900;color:var(--green);font-size:15px}.cardactions{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px}.cardactions .btn{flex:1}
+.empty{grid-column:1/-1;text-align:center;background:var(--surface);border:1px dashed var(--dash);border-radius:15px;padding:35px;color:var(--muted)}
+.sectionhead{margin:27px 0 14px}.panel{margin-top:30px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:22px}
+.panel p{color:var(--muted);font-size:14px;line-height:1.5}
+form.fields{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:750}label.full,.formend{grid-column:1/-1}
+input,select,textarea{border:1px solid var(--input-border);border-radius:10px;padding:11px;background:var(--surface);outline-color:var(--orange);width:100%;color:var(--text)}
+textarea{min-height:82px;resize:vertical}.formend{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.note{font-size:12px;color:var(--muted);line-height:1.5}.hidden{display:none!important}
+.authgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.authbox{border:1px solid var(--line);padding:16px;border-radius:14px}.authbox h3{margin:0 0 12px}
+.status{font-size:11px;font-weight:800;padding:4px 8px;border-radius:999px;background:#fff0df;color:#8a4b0c}.status.approved{background:#e1f5e9;color:#126b49}.status.rejected{background:#fee4e2;color:#a12b23}
+.messages-layout{display:grid;grid-template-columns:280px 1fr;gap:14px;min-height:300px}.conversation-list,.chatbox{border:1px solid var(--line);border-radius:13px;padding:12px;background:var(--surface2)}
+.conversation-item{width:100%;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px;margin-bottom:8px;color:var(--text)}
+.chatbox{display:flex;flex-direction:column;gap:10px}.chatlog{height:240px;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.bubble{max-width:82%;padding:9px 12px;border-radius:12px;background:var(--bubble);font-size:13px;align-self:flex-start;overflow-wrap:anywhere}
+.bubble.mine{background:var(--bubble-mine);align-self:flex-end}.chatcompose{display:flex;gap:8px}.chatcompose input{flex:1}
+.signup-notice{margin-top:14px;padding:13px 15px;border:1px solid var(--ok-line);background:var(--ok-bg);color:var(--ok-text);border-radius:12px;font-size:14px;line-height:1.5}.signup-notice strong{display:block;margin-bottom:4px}
+#networkActivity{position:fixed;top:14px;right:14px;z-index:1000;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:999px;background:#101b35;color:#fff;box-shadow:0 8px 28px #0003;font-size:13px;font-weight:750;opacity:0;transform:translateY(-8px);pointer-events:none;transition:opacity .18s ease,transform .18s ease}
+#networkActivity.visible{opacity:1;transform:translateY(0)}
+#networkActivity .spinner{width:16px;height:16px;border:2px solid #ffffff55;border-top-color:var(--orange);border-radius:50%;animation:networkSpin .7s linear infinite}
+@keyframes networkSpin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--navy);color:white;padding:12px 18px;border-radius:12px;box-shadow:0 8px 30px #0003;display:none;z-index:20;max-width:90vw}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
+@media(max-width:850px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.top{padding-bottom:32px}.hero{margin-top:30px}.grid{grid-template-columns:1fr}.visual{height:100px}main{padding-left:4vw;padding-right:4vw}form.fields,.authgrid{grid-template-columns:1fr}label.full,.formend{grid-column:1}.panel{padding:16px}.messages-layout{grid-template-columns:1fr}.searchbar .btn{padding:10px}}
+
+.offer-photo{cursor:zoom-in}
+#lightbox{position:fixed;inset:0;z-index:2000;background:#000d;display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:10px}
+#lightbox.open{display:flex}
+#lightbox .lbwrap{flex:1;min-height:0;width:100%;overflow:auto;display:flex;align-items:center;justify-content:center}
+#lightbox img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;cursor:zoom-in;transition:transform .2s}
+#lightbox.zoomed .lbwrap{align-items:flex-start;justify-content:flex-start}
+#lightbox.zoomed img{max-width:none;max-height:none;width:auto;cursor:zoom-out;transform:none}
+#lightbox .lbcap{color:#fff;font-size:14px;font-weight:700;text-align:center}
+#lightbox .lbclose{position:absolute;top:12px;right:12px;width:42px;height:42px;border-radius:50%;border:0;background:#fff;color:#101b35;font-size:22px;font-weight:900;line-height:1;z-index:1}
+.navactions .btn.current{outline:2px solid var(--orange);outline-offset:1px}
+.burger{display:flex;flex-direction:column;justify-content:center;gap:5px;width:44px;height:44px;padding:0 11px;border:0;border-radius:11px;background:#ffffff1c}
+.burger span{display:block;height:3px;border-radius:3px;background:#fff}
+.nav{justify-content:flex-start}.nav small{margin-left:auto}
+#drawerOverlay{position:fixed;inset:0;background:#0008;z-index:1500}
+#drawer{position:fixed;top:0;left:0;bottom:0;width:min(300px,85vw);background:var(--surface);color:var(--text);z-index:1600;padding:18px;display:flex;flex-direction:column;gap:18px;transform:translateX(-105%);transition:transform .25s ease;box-shadow:6px 0 30px #0004;overflow:auto;visibility:hidden}
+#drawer.open{transform:none;visibility:visible}
+#drawer .drawerhead{display:flex;align-items:center;justify-content:space-between}
+#drawer .brand{color:var(--text)}
+.drawerclose{width:38px;height:38px;border:0;border-radius:50%;background:var(--ghost-bg);color:var(--text);font-size:18px;font-weight:900}
+#drawer .navactions{flex-direction:column;flex-wrap:nowrap}
+#drawer .navactions .btn{width:100%;text-align:left;padding:13px 15px}
+.authgrid{grid-template-columns:1fr!important;max-width:520px;margin:auto}.authswitch{width:100%;margin-top:12px}
+</style>
 </head>
 <body>
-  <header class="top">
-    <nav class="nav">
-      <div class="brand">AFRIKA <span>PULSE</span></div>
-      <small>Les bons plans. Les bonnes opportunités.</small>
-      <button class="btn" onclick="document.querySelector('#publier').scrollIntoView({behavior:'smooth'})">＋ Publier</button>
-    </nav>
-    <section class="hero">
-      <div class="eyebrow">Découvre · Économise · Partage</div>
-      <h1>Les bons plans qui font du bien à ton budget.</h1>
-      <p>Repère des offres, services et opportunités près de chez toi. Partage aussi tes meilleures trouvailles avec la communauté.</p>
-      <div class="searchbar">
-        <input id="search" type="search" placeholder="Ex. chaussures, formation, restaurant…" aria-label="Rechercher un bon plan">
-        <button class="btn" id="searchBtn">Rechercher</button>
-      </div>
-    </section>
-  </header>
+<div id="networkActivity" role="status" aria-live="polite"><span class="spinner" aria-hidden="true"></span><span id="networkActivityText">Traitement en cours…</span></div>
+<div id="drawerOverlay" class="hidden"></div>
+<aside id="drawer" aria-hidden="true" aria-label="Menu"><div class="drawerhead"><div class="brand">AFRIKA <span>PULSE</span></div><button class="drawerclose" id="drawerClose" type="button" aria-label="Fermer le menu">✕</button></div>
+<div class="navactions">
+<button class="btn ghost hidden" id="homeBtn" data-nav="accueil">Accueil</button>
+<button class="btn ghost" id="myPostsBtn" data-nav="publications">Mes publications</button>
+<button class="btn ghost" id="messagesBtn" data-nav="messages">Mes messages</button>
+<button class="btn ghost" id="accountBtn" data-nav="compte">Connexion</button>
+<button class="btn ghost hidden" id="adminBtn" data-nav="admin">Administration</button>
+<button class="btn" id="publishJump" data-nav="publier">＋ Publier</button>
 
-  <main>
-    <div class="sectionhead">
-      <div><h2>À découvrir</h2><div class="muted" id="count">Les bons plans du moment</div></div>
-      <button class="btn light" id="favoritesOnly">♡ Mes favoris</button>
-    </div>
-    <div class="filters" id="filters">
-      <button class="chip active" data-category="Tous">Tout voir</button>
-      <button class="chip" data-category="Alimentation">🍲 Alimentation</button>
-      <button class="chip" data-category="Mode">👟 Mode</button>
-      <button class="chip" data-category="Technologie">📱 Technologie</button>
-      <button class="chip" data-category="Services">🛠️ Services</button>
-      <button class="chip" data-category="Formation">🎓 Formation</button>
-    </div>
-    <section class="grid" id="offers" aria-live="polite"></section>
+<button class="btn danger hidden" id="drawerLogout" type="button">⎋ Se déconnecter</button></div></aside>
+<header class="top">
+<nav class="nav">
+<button class="burger hidden" id="menuBtn" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="drawer"><span></span><span></span><span></span></button>
+<div class="brand" id="brandHome" style="cursor:pointer">AFRIKA <span>PULSE</span></div>
+<small>Les bons plans. Les bonnes opportunités.</small>
+<button class="btn ghost theme-toggle" id="themeBtn" type="button" aria-label="Changer de thème" title="Changer de thème">🌙 Sombre</button>
 
-    <section class="publish" id="publier">
-      <div class="eyebrow">La communauté participe</div>
-      <h2>Tu connais un bon plan ? Partage-le.</h2>
-      <p>Ajoute une offre utile. Vérifie les informations avant publication et indique clairement les conditions.</p>
-      <form id="offerForm">
-        <label>Titre du bon plan
-          <input name="title" maxlength="65" placeholder="Ex. Réduction sur les fournitures scolaires" required>
-        </label>
-        <label>Catégorie
-          <select name="category" required>
-            <option value="Alimentation">Alimentation</option><option value="Mode">Mode</option><option value="Technologie">Technologie</option><option value="Services">Services</option><option value="Formation">Formation</option>
-          </select>
-        </label>
-        <label>Ville / quartier
-          <input name="place" maxlength="45" placeholder="Ex. Lomé, Agoè" required>
-        </label>
-        <label>Prix ou avantage
-          <input name="price" maxlength="35" placeholder="Ex. 5 000 FCFA ou gratuit">
-        </label>
-        <label class="full">Description et conditions
-          <textarea name="description" maxlength="240" placeholder="Explique l'offre, sa durée et les conditions…" required></textarea>
-        </label>
-        <label class="full">Lien utile (facultatif)
-          <input name="url" type="url" placeholder="https://…">
-        </label>
-        <div class="formend">
-          <span class="note">Version de démonstration : les offres sont enregistrées uniquement dans ce navigateur.</span>
-          <button class="btn dark" type="submit">Publier le bon plan</button>
-        </div>
-      </form>
-    </section>
-  </main>
-  <footer>AFRIKA PULSE · Prototype 1.0 · Vérifie toujours les offres avant d'acheter.</footer>
-  <div class="toast" id="toast" role="status"></div>
+</nav>
+<section class="hero" id="hero">
+<div class="eyebrow">Découvre · Économise · Partage</div>
+<h1>Les bons plans qui font du bien à ton budget.</h1>
+<p>Repère des offres, services et opportunités près de chez toi. Partage aussi tes meilleures trouvailles avec la communauté.</p>
+<div class="searchbar"><input id="search" type="search" placeholder="Ex. chaussures, formation, restaurant…" aria-label="Rechercher un bon plan"><button class="btn" id="searchBtn">Rechercher</button></div>
+</section>
+</header>
+<main>
+<section id="authPanel" class="panel hidden">
+<div class="toolbar"><div><div class="eyebrow">Espace membre</div><h2>Créer un compte ou se connecter</h2><p>Connecte-toi pour publier, gérer tes annonces et contacter un auteur.</p></div><span class="status" id="authStatus">Non connecté</span></div>
+<div class="authgrid">
+<div class="authbox" id="signupBox"><h3>Créer un compte</h3><form id="signupForm" class="fields" style="grid-template-columns:1fr">
+<label class="full">Adresse e-mail<input name="email" type="email" autocomplete="email" required></label>
+<label class="full">Mot de passe<input name="password" type="password" minlength="8" autocomplete="new-password" required></label>
+<button class="btn dark" type="submit">Créer mon compte</button></form>
+<div id="signupNotice" class="signup-notice hidden" role="status" aria-live="polite"></div>
+<button class="btn light authswitch" id="toLogin" type="button">J'ai déjà un compte → Se connecter</button></div>
+<div class="authbox hidden" id="loginBox"><h3>Se connecter</h3><form id="loginForm" class="fields" style="grid-template-columns:1fr">
+<label class="full">Adresse e-mail<input name="email" type="email" autocomplete="email" required></label>
+<label class="full">Mot de passe<input name="password" type="password" autocomplete="current-password" required></label>
+<button class="btn dark" type="submit">Connexion</button></form>
+<button class="btn light authswitch" id="toSignup" type="button">Je n'ai pas de compte → Créer un compte</button></div>
+</div>
+<div class="toolbar" style="margin:14px 0 0">
+ <span class="note" id="sessionInfo">Aucun compte connecté.</span><button class="btn danger hidden" id="logoutBtn">Se déconnecter</button>
+</div>
+</section>
 
+<div id="homeView">
+<div class="sectionhead"><div><h2>À découvrir</h2><div class="muted" id="count">Chargement des bons plans…</div></div><button class="btn light" id="refreshBtn">↻ Actualiser</button></div>
+<div class="filters" id="filters">
+<button class="chip active" data-category="Tous">Tout voir</button><button class="chip" data-category="Alimentation">🍲 Alimentation</button><button class="chip" data-category="Mode">👟 Mode</button><button class="chip" data-category="Technologie">📱 Technologie</button><button class="chip" data-category="Services">🛠️ Services</button><button class="chip" data-category="Formation">🎓 Formation</button>
+</div>
+<section class="grid" id="offers" aria-live="polite"><div class="empty">Connexion à la base de données…</div></section>
+</div>
+
+<section class="panel hidden" id="publishPanel">
+<div class="eyebrow">La communauté participe</div><h2 id="formHeading">Tu connais un bon plan ? Partage-le.</h2>
+<p>Les publications apparaissent automatiquement. Tu peux modifier ou supprimer tes annonces depuis « Mes publications ».</p>
+<form id="offerForm" class="fields">
+<input type="hidden" name="id">
+<label>Titre du bon plan<input name="title" maxlength="65" placeholder="Ex. Réduction sur les fournitures scolaires" required></label>
+<label>Catégorie<select name="category" required><option value="Alimentation">Alimentation</option><option value="Mode">Mode</option><option value="Technologie">Technologie</option><option value="Services">Services</option><option value="Formation">Formation</option></select></label>
+<label>Ville / quartier<input name="place" maxlength="45" placeholder="Ex. Lomé, Agoè" required></label>
+<label>Prix ou avantage<input name="price" maxlength="35" placeholder="Ex. 5 000 FCFA ou gratuit"></label>
+<label class="full">Description et conditions<textarea name="description" maxlength="240" placeholder="Explique l'offre, sa durée et les conditions…" required></textarea></label>
+<label class="full">Lien utile (facultatif)<input name="url" type="url" placeholder="https://…"></label>
+<label class="full">Photo de l’article (facultatif)<input id="offerImage" name="image" type="file" accept="image/jpeg,image/png,image/webp"><span class="note">Formats JPG, PNG ou WebP · 5 Mo maximum.</span><img id="imagePreview" class="photo-preview hidden" alt="Aperçu de la photo sélectionnée"></label>
+<div class="formend"><span class="note">Tu dois être connecté pour publier un bon plan.</span><div><button class="btn ghost hidden" id="cancelEdit" type="button">Annuler</button> <button class="btn dark" type="submit">Publier le bon plan</button></div></div>
+</form>
+</section>
+
+<section class="panel hidden" id="myPostsPanel"><div class="sectionhead"><div><div class="eyebrow">Espace personnel</div><h2>Mes publications</h2></div><button class="btn ghost" data-close="myPostsPanel">Fermer</button></div><div class="grid" id="myPosts"></div></section>
+
+<section class="panel hidden" id="adminPanel"><div class="sectionhead"><div><div class="eyebrow">Espace administrateur</div><h2>Toutes les publications</h2><p class="muted">Tu peux supprimer ici toute publication inappropriée.</p></div><button class="btn ghost" data-close="adminPanel">Fermer</button></div><div class="grid" id="adminPosts"></div></section>
+
+<section class="panel hidden" id="messagesPanel"><div class="sectionhead"><div><div class="eyebrow">Discussions privées</div><h2>Mes messages</h2></div><button class="btn ghost" data-close="messagesPanel">Fermer</button></div>
+<div class="messages-layout"><div class="conversation-list" id="conversationList">Connecte-toi pour voir tes conversations.</div>
+<div class="chatbox"><strong id="chatTitle">Choisis une conversation</strong><div class="chatlog" id="chatLog"><p class="muted">Tes messages apparaîtront ici.</p></div><form id="messageForm" class="chatcompose"><input name="content" maxlength="2000" placeholder="Écrire un message…" required disabled><button class="btn dark" disabled>Envoyer</button></form></div></div>
+</section>
+</main>
+<footer>AFRIKA PULSE · Prototype connecté · Vérifie toujours les offres avant d'acheter.</footer>
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="Photo agrandie"><button class="lbclose" id="lbClose" type="button" aria-label="Fermer">✕</button><div class="lbwrap"><img id="lbImg" alt=""></div><div class="lbcap" id="lbCap"></div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<!-- Supabase JavaScript client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const starterOffers = [
- {id:"demo1",title:"Réduction sur les fournitures scolaires",category:"Services",place:"Lomé",price:"Prix à vérifier",description:"Exemple de bon plan : compare les prix des cahiers et fournitures chez plusieurs vendeurs avant d'acheter.",emoji:"📚",tone:"blue",url:""},
- {id:"demo2",title:"Atelier gratuit d'initiation au numérique",category:"Formation",place:"En ligne",price:"Gratuit",description:"Exemple d'opportunité de formation. Vérifie l'organisateur, les dates et les conditions d'inscription.",emoji:"💻",tone:"green",url:""},
- {id:"demo3",title:"Sélection de vêtements à petit prix",category:"Mode",place:"Lomé",price:"À partir de  prix à confirmer",description:"Exemple à remplacer par une offre réelle et vérifiée auprès du vendeur.",emoji:"👟",tone:"",url:""},
- {id:"demo4",title:"Conseils pour économiser sur les repas",category:"Alimentation",place:"Partout",price:"Astuces gratuites",description:"Prépare une liste, compare les prix au marché et privilégie les produits de saison.",emoji:"🥑",tone:"green",url:""},
- {id:"demo5",title:"Dépannage et assistance informatique",category:"Technologie",place:"Lomé",price:"Demander un devis",description:"Exemple de service local. Demande le tarif et les références du prestataire avant de confirmer.",emoji:"🔧",tone:"purple",url:""},
- {id:"demo6",title:"Applications gratuites pour apprendre",category:"Formation",place:"En ligne",price:"Gratuit",description:"Découvre des ressources éducatives gratuites. Vérifie les éventuels frais cachés avant inscription.",emoji:"🎓",tone:"blue",url:""}
-];
-let userOffers = JSON.parse(localStorage.getItem("ap_user_offers") || "[]");
-let favorites = JSON.parse(localStorage.getItem("ap_favorites") || "[]");
-let category = "Tous", onlyFavorites = false;
-const offersEl = document.getElementById("offers");
-const icons = {Alimentation:"🍲",Mode:"👟",Technologie:"📱",Services:"🛠️",Formation:"🎓"};
-function allOffers(){return [...userOffers,...starterOffers]}
-function safeUrl(value){try{const u=new URL(value);return ["http:","https:"].includes(u.protocol)?u.href:""}catch{return ""}}
-function escapeHTML(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function render(){
- const q=document.getElementById("search").value.trim().toLowerCase();
- const items=allOffers().filter(o=>(category==="Tous"||o.category===category)&&(!onlyFavorites||favorites.includes(o.id))&&(!q||[o.title,o.description,o.place,o.category].join(" ").toLowerCase().includes(q)));
- document.getElementById("count").textContent=items.length+" bon(s) plan(s) affiché(s)";
- offersEl.innerHTML=items.length?items.map(o=>{
-  const fav=favorites.includes(o.id), link=safeUrl(o.url);
-  return `<article class="card"><div class="visual ${escapeHTML(o.tone||"")}"><span class="tag">${escapeHTML(o.category)}</span><span>${escapeHTML(o.emoji||icons[o.category]||"✨")}</span><button class="fav" aria-label="Ajouter aux favoris" data-fav="${escapeHTML(o.id)}">${fav?"❤️":"♡"}</button></div><div class="cardbody"><h3>${escapeHTML(o.title)}</h3><p class="desc">${escapeHTML(o.description)}</p><div class="price">${escapeHTML(o.price||"Voir les détails")}</div><div class="meta"><span>📍 ${escapeHTML(o.place)}</span><span>${o.id.startsWith("demo")?"Exemple":"Communauté"}</span></div>${link?`<a class="cardlink" href="${escapeHTML(link)}" target="_blank" rel="noopener noreferrer">Voir l'offre ↗</a>`:""}</div></article>`
- }).join(""):`<div class="empty">Aucun bon plan trouvé. Essaie une autre recherche ou catégorie.</div>`;
- offersEl.querySelectorAll("[data-fav]").forEach(b=>b.addEventListener("click",()=>toggleFav(b.dataset.fav)));
+// 1) Remplace uniquement ces deux valeurs par celles de TON projet Supabase.
+const SUPABASE_URL = "https://kiggdtkqjxghhkjtjffg.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_KoqLae_REDC5gebp5jB_Sg_NBHMAofp";
+
+const configured = SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("COLLE_ICI")
+  && SUPABASE_PUBLISHABLE_KEY.startsWith("sb_publishable_") && !SUPABASE_PUBLISHABLE_KEY.includes("COLLE_ICI");
+// Indicateur commun : il s'active pendant les échanges avec Supabase.
+let pendingNetworkRequests = 0, networkShowTimer = null;
+function networkLabel(input){
+ const url=typeof input==="string"?input:(input&&input.url)||"";
+ if(url.includes("/auth/v1/"))return "Connexion au serveur…";
+ if(url.includes("/storage/v1/"))return "Envoi de la photo…";
+ if(url.includes("/rest/v1/messages"))return "Envoi / chargement des messages…";
+ if(url.includes("/rest/v1/bons_plans"))return "Chargement / enregistrement des bons plans…";
+ return "Traitement en cours…";
 }
-function toggleFav(id){favorites=favorites.includes(id)?favorites.filter(x=>x!==id):[...favorites,id];localStorage.setItem("ap_favorites",JSON.stringify(favorites));render()}
-function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.style.display="block";setTimeout(()=>t.style.display="none",2400)}
-document.getElementById("filters").addEventListener("click",e=>{const b=e.target.closest("[data-category]");if(!b)return;category=b.dataset.category;document.querySelectorAll(".chip").forEach(x=>x.classList.toggle("active",x===b));render()});
-document.getElementById("search").addEventListener("input",render);
-document.getElementById("searchBtn").addEventListener("click",render);
-document.getElementById("favoritesOnly").addEventListener("click",e=>{onlyFavorites=!onlyFavorites;e.currentTarget.textContent=onlyFavorites?"Voir toutes les offres":"♡ Mes favoris";e.currentTarget.classList.toggle("dark",onlyFavorites);render()});
-document.getElementById("offerForm").addEventListener("submit",e=>{
- e.preventDefault();const f=new FormData(e.currentTarget);
- const title=String(f.get("title")).trim(),description=String(f.get("description")).trim(),place=String(f.get("place")).trim();
- if(!title||!description||!place){toast("Remplis les champs obligatoires.");return}
- const offer={id:"user"+Date.now(),title,category:f.get("category"),place,price:String(f.get("price")).trim(),description,url:safeUrl(String(f.get("url")).trim()),emoji:icons[f.get("category")]||"✨",tone:""};
- userOffers.unshift(offer);localStorage.setItem("ap_user_offers",JSON.stringify(userOffers));e.currentTarget.reset();category="Tous";onlyFavorites=false;document.querySelectorAll(".chip").forEach(x=>x.classList.toggle("active",x.dataset.category==="Tous"));document.getElementById("favoritesOnly").textContent="♡ Mes favoris";render();toast("Bon plan ajouté sur cet appareil !");window.scrollTo({top:350,behavior:"smooth"});
+function beginNetworkActivity(label){
+ pendingNetworkRequests++;
+ $("networkActivityText").textContent=label;
+ if(!networkShowTimer){
+  networkShowTimer=setTimeout(()=>{
+   if(pendingNetworkRequests>0)$("networkActivity").classList.add("visible");
+   networkShowTimer=null;
+  },140);
+ }
+}
+function endNetworkActivity(){
+ pendingNetworkRequests=Math.max(0,pendingNetworkRequests-1);
+ if(pendingNetworkRequests===0){
+  if(networkShowTimer){clearTimeout(networkShowTimer);networkShowTimer=null;}
+  $("networkActivity").classList.remove("visible");
+ }
+}
+const nativeFetch=window.fetch.bind(window);
+window.fetch=async function(input,init){
+ const url=typeof input==="string"?input:(input&&input.url)||"";
+ const isSupabaseRequest=url.startsWith(SUPABASE_URL);
+ if(isSupabaseRequest)beginNetworkActivity(networkLabel(input));
+ try{return await nativeFetch(input,init);}
+ finally{if(isSupabaseRequest)endNetworkActivity();}
+};
+const db = configured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY) : null;
+
+let currentUser = null, allOffers = [], category = "Tous", activeConversation = null, editingImageUrl = "", isAdmin = false;
+const icons = {Alimentation:"🍲",Mode:"👟",Technologie:"📱",Services:"🛠️",Formation:"🎓"};
+const $ = id => document.getElementById(id);
+function toast(msg){const t=$("toast");t.textContent=msg;t.style.display="block";setTimeout(()=>t.style.display="none",3000)}
+
+
+// ===== Agrandissement des photos =====
+(function(){
+ const lb=$("lightbox"),img=$("lbImg");
+ function open(src,alt){img.src=src;img.alt=alt||"";$("lbCap").textContent=alt||"";lb.classList.remove("zoomed");lb.classList.add("open");document.body.style.overflow="hidden"}
+ function close(){lb.classList.remove("open","zoomed");img.src="";document.body.style.overflow=""}
+ document.addEventListener("click",e=>{const t=e.target.closest("img.offer-photo, img.photo-preview");if(t&&t.src)open(t.src,t.alt)});
+ img.addEventListener("click",()=>lb.classList.toggle("zoomed"));
+ lb.addEventListener("click",e=>{if(e.target===lb||e.target.classList.contains("lbwrap"))close()});
+ $("lbClose").addEventListener("click",close);
+ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&lb.classList.contains("open"))close()});
+})();
+
+// ===== Tiroir du menu =====
+(function(){
+ const dr=$("drawer"),ov=$("drawerOverlay"),mb=$("menuBtn");
+ function setDrawer(open){
+  dr.classList.toggle("open",open);ov.classList.toggle("hidden",!open);
+  dr.setAttribute("aria-hidden",String(!open));mb.setAttribute("aria-expanded",String(open));
+  document.body.style.overflow=open?"hidden":"";
+  if(open)dr.querySelector("button:not(.hidden)")?.focus();else if(document.activeElement&&dr.contains(document.activeElement))mb.focus();
+ }
+ mb.addEventListener("click",()=>setDrawer(true));
+ $("drawerClose").addEventListener("click",()=>setDrawer(false));
+ ov.addEventListener("click",()=>setDrawer(false));
+ dr.addEventListener("click",e=>{const b=e.target.closest("button");if(b&&b.id!=="themeBtn"&&b.id!=="drawerClose")setTimeout(()=>setDrawer(false),0)});
+ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&dr.classList.contains("open"))setDrawer(false)});
+})();
+// ===== Thème clair / sombre (préférence propre à chaque utilisateur) =====
+const Theme={
+ key(){return currentUser?`ap-theme:${currentUser.id}`:"ap-theme"},
+ read(k){try{const v=localStorage.getItem(k);return v==="dark"||v==="light"?v:null}catch(e){return null}},
+ write(k,v){try{localStorage.setItem(k,v)}catch(e){}},
+ system(){return matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"},
+ apply(t){
+  document.documentElement.setAttribute("data-theme",t);
+  const dark=t==="dark";
+  $("themeBtn").textContent=dark?"☀️ Clair":"🌙 Sombre";
+  $("themeBtn").setAttribute("aria-pressed",String(dark));
+  document.querySelector('meta[name="theme-color"]').setAttribute("content",dark?"#0b1222":"#101b35");
+  this.write("ap-theme-last",t);
+ },
+ load(){this.apply(this.read(this.key())||this.read("ap-theme")||this.system())},
+ toggle(){
+  const next=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";
+  this.write(this.key(),next);
+  if(currentUser)this.write("ap-theme",next);
+  this.apply(next);
+ }
+};
+$("themeBtn").addEventListener("click",()=>Theme.toggle());
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",()=>{if(!Theme.read(Theme.key()))Theme.apply(Theme.system())});
+Theme.load();
+function siteLanguage(){
+ return (document.documentElement.lang||"fr").toLowerCase().startsWith("en")?"en":"fr";
+}
+function localizedError(err){
+ const en=siteLanguage()==="en";
+ const code=String(err?.code||err?.status||"").toLowerCase();
+ const raw=String(err?.message||err||"").toLowerCase();
+ const messages={
+  invalid_credentials: ["Adresse e-mail ou mot de passe incorrect.","Incorrect email address or password."],
+  email_not_confirmed: ["Confirme d'abord ton adresse e-mail avant de te connecter.","Please confirm your email address before signing in."],
+  user_already_exists: ["Un compte existe déjà avec cette adresse e-mail.","An account already exists with this email address."],
+  weak_password: ["Le mot de passe est trop faible. Choisis-en un plus sécurisé.","The password is too weak. Choose a stronger password."],
+  over_email_send_rate_limit: ["Trop de demandes d'e-mails. Réessaie plus tard.","Too many email requests. Please try again later."],
+  email_address_invalid: ["L'adresse e-mail n'est pas valide.","The email address is invalid."],
+  too_many_requests: ["Trop de tentatives. Attends un peu avant de réessayer.","Too many attempts. Please wait a moment and try again."],
+  "42501": ["Tu n'as pas l'autorisation d'effectuer cette action.","You are not allowed to perform this action."],
+  "23505": ["Cet élément existe déjà.","This item already exists."],
+  "23503": ["Cette opération est impossible car un élément lié est introuvable.","This action cannot be completed because a related item was not found."],
+  "42p01": ["Une table nécessaire est introuvable. Contacte l'administrateur du site.","A required table could not be found. Please contact the site administrator."]
+ };
+ if(messages[code])return messages[code][en?1:0];
+ if(raw.includes("failed to fetch")||raw.includes("networkerror")||raw.includes("network request failed"))
+  return en?"Connection problem. Check your internet connection and try again.":"Problème de connexion. Vérifie ta connexion Internet puis réessaie.";
+ if(raw.includes("row-level security")||raw.includes("permission denied")||raw.includes("not authorized"))
+  return en?"You do not have permission to perform this action.":"Tu n'as pas l'autorisation d'effectuer cette action.";
+ if(raw.includes("jwt")||raw.includes("token")&&raw.includes("expired"))
+  return en?"Your session has expired. Please sign in again.":"Ta session a expiré. Connecte-toi à nouveau.";
+ return en?"Something went wrong. Please try again.":"Une erreur est survenue. Réessaie, s'il te plaît.";
+}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function safeUrl(v){try{const u=new URL(v);return ["http:","https:"].includes(u.protocol)?u.href:""}catch{return ""}}
+function resetOfferEditor(){
+ const form=$("offerForm");form.reset();form.elements.id.value="";editingImageUrl="";
+ $("imagePreview").src="";$("imagePreview").classList.add("hidden");
+ $("formHeading").textContent="Tu connais un bon plan ? Partage-le.";$("cancelEdit").classList.add("hidden");
+}
+$("offerImage").addEventListener("change",()=>{
+ const file=$("offerImage").files[0],preview=$("imagePreview");
+ if(!file){preview.src=editingImageUrl;preview.classList.toggle("hidden",!editingImageUrl);return}
+ if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>5*1024*1024){toast("Choisis une image JPG, PNG ou WebP de 5 Mo maximum.");$("offerImage").value="";return}
+ preview.src=URL.createObjectURL(file);preview.classList.remove("hidden");
 });
-render();
+async function uploadOfferImage(file){
+ if(!file)return editingImageUrl||null;
+ const ext=file.type==="image/png"?"png":file.type==="image/webp"?"webp":"jpg";
+ const path=`${currentUser.id}/${crypto.randomUUID()}.${ext}`;
+ const {error}=await db.storage.from("offer-images").upload(path,file,{contentType:file.type,upsert:false});
+ if(error)throw error;
+ return db.storage.from("offer-images").getPublicUrl(path).data.publicUrl;
+}
+const VIEWS={accueil:"homeView",compte:"authPanel",publier:"publishPanel",publications:"myPostsPanel",messages:"messagesPanel",admin:"adminPanel"};
+const PROTECTED=["publications","messages","admin"];
+let currentView="accueil",autoAuthDone=false,sessionChecked=false;
+function enterView(v){
+ if(!currentUser)return;
+ if(v==="publications")loadMyPosts();
+ else if(v==="messages")loadConversations();
+ else if(v==="admin"&&isAdmin)loadAdminPosts();
+}
+function goTo(v,opt={}){
+ if(!VIEWS[v])v="accueil";
+ if(v==="accueil"&&sessionChecked&&!currentUser)v="compte";
+ currentView=v;
+ Object.entries(VIEWS).forEach(([k,id])=>$(id).classList.toggle("hidden",k!==v));
+ $("hero").classList.toggle("hidden",v!=="accueil");
+ document.querySelectorAll("[data-nav]").forEach(b=>b.classList.toggle("current",b.dataset.nav===v));
+ if(opt.push!==false&&location.hash!=="#"+v)history.pushState(null,"","#"+v);
+ if(opt.scroll!==false)window.scrollTo({top:0});
+ if(opt.load!==false)enterView(v);
+}
+function showPanel(id){const v=Object.keys(VIEWS).find(k=>VIEWS[k]===id)||"accueil";goTo(v,{load:false})}
+window.addEventListener("hashchange",()=>goTo(location.hash.slice(1),{push:false}));
+document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",()=>goTo("accueil")));
+$("drawerLogout").onclick=()=>$("logoutBtn").click();
+function showAuth(w){$("signupBox").classList.toggle("hidden",w!=="signup");$("loginBox").classList.toggle("hidden",w!=="login");$(w==="login"?"loginBox":"signupBox").querySelector("input")?.focus()}
+$("toLogin").onclick=()=>showAuth("login");
+$("toSignup").onclick=()=>showAuth("signup");
+$("brandHome").onclick=()=>goTo("accueil");
+$("homeBtn").onclick=()=>goTo("accueil");
+$("accountBtn").onclick=()=>goTo("compte");
+$("publishJump").onclick=()=>goTo("publier");
+$("myPostsBtn").onclick=()=>{if(!requireLogin())return;goTo("publications")};
+$("messagesBtn").onclick=()=>{if(!requireLogin())return;goTo("messages")};
+$("adminBtn").onclick=()=>{if(!requireLogin()||!isAdmin)return;goTo("admin")};
+$("refreshBtn").onclick=loadOffers;
+$("search").addEventListener("input",renderOffers);$("searchBtn").onclick=renderOffers;
+$("filters").addEventListener("click",e=>{const b=e.target.closest("[data-category]");if(!b)return;category=b.dataset.category;document.querySelectorAll(".chip").forEach(x=>x.classList.toggle("active",x===b));renderOffers()});
+function requireLogin(){if(!currentUser){toast("Connecte-toi ou crée un compte pour continuer.");goTo("compte");return false}return true}
+
+async function refreshSession(){
+ if(!db){$("count").textContent="Configuration Supabase manquante";$("offers").innerHTML='<div class="empty">Ajoute ton API URL et ta Publishable key dans le code pour activer le site.</div>';return}
+ const {data:{session}}=await db.auth.getSession();currentUser=session?.user||null;sessionChecked=true;updateAuthUI();await loadAdminRole();
+ if(!currentUser&&!autoAuthDone){autoAuthDone=true;goTo("compte",{push:false,scroll:false})}
+ else if(!currentUser&&PROTECTED.includes(currentView))goTo("compte",{push:false});
+ else if(currentView==="admin"&&!isAdmin)goTo("accueil",{push:false});
+ else enterView(currentView);
+}
+function updateAuthUI(){
+ $("authStatus").textContent=currentUser?"Connecté":"Non connecté";
+ $("sessionInfo").textContent=currentUser?`Connecté avec ${currentUser.email}`:"Aucun compte connecté.";
+ $("logoutBtn").classList.toggle("hidden",!currentUser);
+ $("drawerLogout").classList.toggle("hidden",!currentUser);
+ $("homeBtn").classList.toggle("hidden",!currentUser);
+ $("menuBtn").classList.toggle("hidden",!currentUser);
+ if(currentUser){$("signupBox").classList.add("hidden");$("loginBox").classList.add("hidden");$("signupNotice").classList.add("hidden")}
+ else if($("signupBox").classList.contains("hidden")&&$("loginBox").classList.contains("hidden"))$("signupBox").classList.remove("hidden");
+ if(currentUser&&sessionChecked&&currentView==="compte")goTo("accueil",{push:false});
+ if(!currentUser){$("drawer").classList.remove("open");$("drawerOverlay").classList.add("hidden");document.body.style.overflow=""}
+ $("accountBtn").textContent=currentUser?"Mon compte":"Connexion";
+ $("adminBtn").classList.toggle("hidden",!currentUser||!isAdmin);
+ if(typeof Theme!=="undefined")Theme.load();
+}
+async function loadAdminRole(){
+ isAdmin=false;
+ $("adminBtn").classList.add("hidden");
+ if(currentUser&&db){
+  const {data,error}=await db.from("user_roles").select("role").eq("user_id",currentUser.id).maybeSingle();
+  if(!error)isAdmin=data?.role==="admin";
+ }
+ $("adminBtn").classList.toggle("hidden",!currentUser||!isAdmin);
+ if(!isAdmin)$("adminPanel").classList.add("hidden");
+}
+$("signupForm").addEventListener("submit",async e=>{
+ e.preventDefault();if(!db)return toast("Configure d'abord Supabase dans le code.");
+ const form=e.currentTarget,f=new FormData(form),email=String(f.get("email")).trim(),password=String(f.get("password"));
+ const {data,error}=await db.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}});
+ if(error)return toast(localizedError(error));
+ form.reset();
+ const notice=$("signupNotice");
+ if(data.session){
+  notice.classList.add("hidden");
+  toast("Compte créé et connecté.");goTo("accueil");
+ }else{
+  notice.textContent="";
+  const strong=document.createElement("strong");
+  strong.textContent="Vérifie ta boîte e-mail";
+  notice.appendChild(strong);
+  notice.appendChild(document.createTextNode(
+   ` Un e-mail contenant un lien de confirmation a été envoyé à ${email}. Ouvre ta boîte mail (pense à vérifier les spams) et clique sur le lien pour activer ton compte, puis connecte-toi.`
+  ));
+  notice.classList.remove("hidden");
+  toast("E-mail de confirmation envoyé à "+email);
+  notice.scrollIntoView({behavior:"smooth",block:"center"});
+ }
+ await refreshSession();
+});
+$("loginForm").addEventListener("submit",async e=>{
+ e.preventDefault();if(!db)return toast("Configure d'abord Supabase dans le code.");
+ const form=e.currentTarget,f=new FormData(form);
+ const {error}=await db.auth.signInWithPassword({email:String(f.get("email")).trim(),password:String(f.get("password"))});
+ if(error)return toast(localizedError(error));
+ form.reset();await refreshSession();toast("Connexion réussie.");goTo("accueil");await loadOffers();
+});
+$("logoutBtn").onclick=async()=>{await db.auth.signOut();currentUser=null;isAdmin=false;updateAuthUI();$("adminPanel").classList.add("hidden");activeConversation=null;toast("Déconnexion effectuée.");goTo("compte");await loadOffers()};
+if(db)db.auth.onAuthStateChange(async(_event,session)=>{currentUser=session?.user||null;sessionChecked=true;updateAuthUI();await loadAdminRole();});
+
+async function loadOffers(){
+ if(!db)return refreshSession();
+ $("offers").innerHTML='<div class="empty">Chargement…</div>';
+ const {data,error}=await db.from("bons_plans").select("*").eq("status","approved").order("created_at",{ascending:false});
+ if(error){$("offers").innerHTML=`<div class="empty">${siteLanguage()==="en"?"Unable to load deals: ":"Impossible de charger les bons plans : "}${esc(localizedError(error))}</div>`;return}
+ allOffers=data||[];renderOffers();
+}
+function renderOffers(){
+ const q=$("search").value.trim().toLowerCase();
+ const items=allOffers.filter(o=>(category==="Tous"||o.category===category)&&(!q||[o.title,o.description,o.place,o.category].join(" ").toLowerCase().includes(q)));
+ $("count").textContent=items.length+" bon(s) plan(s) affiché(s)";
+ $("offers").innerHTML=items.length?items.map(o=>{
+ const link=safeUrl(o.url),mine=currentUser&&o.user_id===currentUser.id;
+ return `<article class="card">${o.image_url?`<img class="offer-photo" src="${esc(o.image_url)}" alt="Photo de ${esc(o.title)}" loading="lazy">`:`<div class="visual"><span class="tag">${esc(o.category)}</span><span>${esc(icons[o.category]||"✨")}</span></div>`}<div class="cardbody"><h3>${esc(o.title)}</h3><p class="desc">${esc(o.description)}</p><div class="price">${esc(o.price||"Voir les détails")}</div><div class="meta"><span>📍 ${esc(o.place)}</span><span>Communauté</span></div>${link?`<a class="btn ghost" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Voir l'offre ↗</a>`:""}<div class="cardactions">${mine?'<button class="btn ghost" data-edit="'+esc(o.id)+'">Modifier</button><button class="btn danger" data-delete="'+esc(o.id)+'">Supprimer</button>':'<button class="btn dark" data-contact="'+esc(o.id)+'">Contacter l’auteur</button>'}</div></div></article>`;
+ }).join(""):'<div class="empty">Aucun bon plan trouvé pour le moment.</div>';
+ $("offers").querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>editOffer(b.dataset.edit));
+ $("offers").querySelectorAll("[data-delete]").forEach(b=>b.onclick=()=>deleteOffer(b.dataset.delete));
+ $("offers").querySelectorAll("[data-contact]").forEach(b=>b.onclick=()=>startConversation(b.dataset.contact));
+}
+
+$("offerForm").addEventListener("submit",async e=>{
+ e.preventDefault();if(!requireLogin())return;
+ const f=new FormData(e.currentTarget),id=String(f.get("id")||"");
+ const file=$("offerImage").files[0];
+ let imageUrl;
+ try{imageUrl=await uploadOfferImage(file)}catch(err){toast("Échec de l’envoi de la photo : "+err.message);return}
+ const payload={title:String(f.get("title")).trim(),category:String(f.get("category")),place:String(f.get("place")).trim(),price:String(f.get("price")).trim(),description:String(f.get("description")).trim(),url:safeUrl(String(f.get("url")).trim()),image_url:imageUrl,status:"approved",updated_at:new Date().toISOString()};
+ let result;
+ if(id)result=await db.from("bons_plans").update(payload).eq("id",id).eq("user_id",currentUser.id);
+ else result=await db.from("bons_plans").insert({...payload,user_id:currentUser.id});
+ if(result.error){toast(localizedError(result.error));return}
+ resetOfferEditor();
+ toast(id?"Bon plan modifié et publié.":"Bon plan publié automatiquement.");
+ await loadOffers();await loadMyPosts();
+});
+async function loadMyPosts(){
+ const {data,error}=await db.from("bons_plans").select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false});
+ if(error){$("myPosts").innerHTML='<div class="empty">'+esc(localizedError(error))+'</div>';return}
+ $("myPosts").innerHTML=(data||[]).length?data.map(o=>`<article class="card"><div class="cardbody"><span class="status ${o.status}">${o.status==="approved"?"Publié":o.status==="rejected"?"Refusé":"En attente"}</span><h3>${esc(o.title)}</h3><p class="desc">${esc(o.description)}</p><div class="cardactions"><button class="btn ghost" data-myedit="${esc(o.id)}">Modifier</button><button class="btn danger" data-mydelete="${esc(o.id)}">Supprimer</button></div></div></article>`).join(""):'<div class="empty">Tu n’as pas encore publié de bon plan.</div>';
+ $("myPosts").querySelectorAll("[data-myedit]").forEach(b=>b.onclick=()=>editOffer(b.dataset.myedit));
+ $("myPosts").querySelectorAll("[data-mydelete]").forEach(b=>b.onclick=()=>deleteOffer(b.dataset.mydelete));
+}
+async function loadAdminPosts(){
+ if(!requireLogin()||!isAdmin)return;
+ const {data,error}=await db.from("bons_plans").select("*").order("created_at",{ascending:false});
+ if(error){$("adminPosts").innerHTML='<div class="empty">'+esc(localizedError(error))+'</div>';return}
+ $("adminPosts").innerHTML=(data||[]).length?data.map(o=>`<article class="card">${o.image_url?`<img class="offer-photo" src="${esc(o.image_url)}" alt="Photo de ${esc(o.title)}" loading="lazy">`:''}<div class="cardbody"><span class="status ${esc(o.status)}">${o.status==="approved"?"Publié":o.status==="rejected"?"Refusé":"En attente"}</span><h3>${esc(o.title)}</h3><p class="desc">${esc(o.description)}</p><div class="meta"><span>📍 ${esc(o.place)}</span><span>Auteur : ${esc(o.user_id)}</span></div><div class="cardactions"><button class="btn danger" data-admin-delete="${esc(o.id)}">Supprimer cette publication</button></div></div></article>`).join(""):'<div class="empty">Aucune publication.</div>';
+ $("adminPosts").querySelectorAll("[data-admin-delete]").forEach(b=>b.onclick=()=>deleteOffer(b.dataset.adminDelete,true));
+}
+async function editOffer(id){
+ if(!requireLogin())return;
+ const {data,error}=await db.from("bons_plans").select("*").eq("id",id).single();
+ if(error)return toast(localizedError(error));if(data.user_id!==currentUser.id)return toast("Cette publication ne t'appartient pas.");
+ const form=$("offerForm");["id","title","category","place","price","description","url"].forEach(k=>form.elements[k].value=data[k]??"");
+ editingImageUrl=data.image_url||"";$("imagePreview").src=editingImageUrl;$("imagePreview").classList.toggle("hidden",!editingImageUrl);
+ $("formHeading").textContent="Modifier ton bon plan";$("cancelEdit").classList.remove("hidden");goTo("publier",{load:false});
+}
+$("cancelEdit").onclick=resetOfferEditor;
+async function deleteOffer(id,adminMode=false){
+ if(!requireLogin()||!confirm("Supprimer définitivement ce bon plan ?"))return;
+ if(adminMode&&!isAdmin)return toast("Action réservée à l’administrateur.");
+ let request=db.from("bons_plans").delete().eq("id",id);
+ if(!adminMode)request=request.eq("user_id",currentUser.id);
+ const {error}=await request;
+ if(error)return toast(localizedError(error));
+ toast("Publication supprimée.");await loadOffers();await loadMyPosts();
+ if(isAdmin&&!$("adminPanel").classList.contains("hidden"))await loadAdminPosts();
+}
+async function startConversation(offerId){
+ if(!requireLogin())return;
+ const offer=allOffers.find(x=>x.id===offerId);if(!offer)return;
+ if(offer.user_id===currentUser.id)return toast("Tu ne peux pas te contacter toi-même.");
+ let {data:conv,error}=await db.from("conversations").select("*").eq("offer_id",offerId).eq("buyer_id",currentUser.id).maybeSingle();
+ if(error)return toast(localizedError(error));
+ if(!conv){
+  const created=await db.from("conversations").insert({offer_id:offerId,buyer_id:currentUser.id,seller_id:offer.user_id}).select().single();
+  if(created.error)return toast(localizedError(created.error));conv=created.data;
+ }
+ showPanel("messagesPanel");await loadConversations();await openConversation(conv.id,offer.title);
+}
+async function loadConversations(){
+ if(!requireLogin())return;
+ const {data,error}=await db.from("conversations").select("id,offer_id,buyer_id,seller_id,created_at,bons_plans(title)").order("created_at",{ascending:false});
+ if(error){$("conversationList").textContent=localizedError(error);return}
+ if(!data?.length){$("conversationList").textContent="Aucune conversation pour le moment.";return}
+ $("conversationList").innerHTML=data.map(c=>`<button class="conversation-item" data-conv="${esc(c.id)}"><strong>${esc(c.bons_plans?.title||"Bon plan")}</strong><br><span class="muted">${c.buyer_id===currentUser.id?"Tu as contacté l'auteur":"Un utilisateur t'a contacté"}</span></button>`).join("");
+ $("conversationList").querySelectorAll("[data-conv]").forEach(b=>b.onclick=()=>openConversation(b.dataset.conv));
+}
+async function openConversation(id,title){
+ activeConversation=id;$("chatTitle").textContent=title||"Conversation privée";
+ $("messageForm").elements.content.disabled=false;$("messageForm").querySelector("button").disabled=false;
+ const {data,error}=await db.from("messages").select("*").eq("conversation_id",id).order("created_at",{ascending:true});
+ if(error){toast(localizedError(error));return}
+ $("chatLog").innerHTML=(data||[]).map(m=>`<div class="bubble ${m.sender_id===currentUser.id?"mine":""}">${esc(m.content)}<div class="muted">${new Date(m.created_at).toLocaleString("fr-FR")}</div></div>`).join("")||'<p class="muted">Commence la conversation.</p>';
+ $("chatLog").scrollTop=$("chatLog").scrollHeight;
+}
+$("messageForm").addEventListener("submit",async e=>{
+ e.preventDefault();if(!activeConversation||!requireLogin())return;
+ const input=e.currentTarget.elements.content,content=input.value.trim();if(!content)return;
+ const {error}=await db.from("messages").insert({conversation_id:activeConversation,sender_id:currentUser.id,content});
+ if(error)return toast(localizedError(error));input.value="";await openConversation(activeConversation,$("chatTitle").textContent);
+});
+goTo(location.hash.slice(1),{push:false,load:false,scroll:false});
+(async()=>{await refreshSession();if(db)await loadOffers()})();
 </script>
 </body>
 </html>
