@@ -681,7 +681,8 @@ async function loadMyPosts(){
  $("myPosts").innerHTML=(data||[]).length?data.map(o=>`<article class="card"><div class="cardbody"><span class="status ${o.status}">${o.status==="approved"?"Publié":o.status==="rejected"?"Refusé":"En attente"}</span><h3>${esc(o.title)}</h3><p class="desc">${esc(o.description)}</p><div class="cardactions"><button class="btn light" data-mysold="${esc(o.id)}" data-sold="${o.sold?1:0}">${o.sold?"Remettre en vente":"Marquer vendue"}</button><button class="btn ghost" data-myedit="${esc(o.id)}">Modifier</button><button class="btn danger" data-mydelete="${esc(o.id)}">Supprimer</button></div></div></article>`).join(""):'<div class="empty">Tu n’as pas encore publié de bon plan.</div>';
  $("myPosts").querySelectorAll("[data-mysold]").forEach(b=>b.onclick=async()=>{
   const {data:d,error:er}=await db.from("bons_plans").update({sold:b.dataset.sold!=="1"}).eq("id",b.dataset.mysold).eq("user_id",currentUser.id).select();
-  if(er||!d||!d.length)return toast("Cette option n'est pas encore activée sur le site.");
+  if(er)return toast("Erreur : "+(er.message||er.code));
+  if(!d||!d.length)return toast("Aucune ligne modifiée : le droit de modifier tes annonces n'est pas activé sur Supabase.");
   toast(b.dataset.sold==="1"?"Remise en vente.":"Marquée comme vendue.");await loadOffers();await loadMyPosts();
  });
  $("myPosts").querySelectorAll("[data-myedit]").forEach(b=>b.onclick=()=>editOffer(b.dataset.myedit));
@@ -695,7 +696,8 @@ async function loadAdminPosts(){
  $("adminPosts").innerHTML=(data||[]).length?data.map(o=>`<article class="card">${o.image_url?`<img class="offer-photo" src="${esc(o.image_url)}" alt="Photo de ${esc(o.title)}" loading="lazy">`:''}<div class="cardbody"><span class="status ${esc(o.status)}">${o.status==="approved"?"Publié":o.status==="rejected"?"Refusé":"En attente"}</span><h3>${esc(o.title)}</h3><p class="desc">${esc(o.description)}</p><div class="meta"><span>📍 ${esc(o.place)}</span><span>Auteur : ${esc(o.user_id)}</span></div><div class="cardactions"><button class="btn light" data-feature="${esc(o.id)}" data-on="${o.featured?1:0}">${o.featured?"Retirer ⭐":"Mettre en avant ⭐"}</button><button class="btn danger" data-admin-delete="${esc(o.id)}">Supprimer cette publication</button></div></div></article>`).join(""):'<div class="empty">Aucune publication.</div>';
  $("adminPosts").querySelectorAll("[data-feature]").forEach(b=>b.onclick=async()=>{
   const {data:d,error:er}=await db.from("bons_plans").update({featured:b.dataset.on!=="1"}).eq("id",b.dataset.feature).select();
-  if(er||!d||!d.length)return toast("Option non activée : lance la partie 6 de supabase_ajouts.sql.");
+  if(er)return toast("Erreur : "+(er.message||er.code));
+  if(!d||!d.length)return toast("Aucune ligne modifiée : le droit administrateur de modifier n'est pas activé sur Supabase.");
   toast(b.dataset.on==="1"?"Retirée de la une.":"Annonce mise en avant ⭐");await loadOffers();await loadAdminPosts();
  });
  $("adminPosts").querySelectorAll("[data-admin-delete]").forEach(b=>b.onclick=()=>deleteOffer(b.dataset.adminDelete,true));
