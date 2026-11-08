@@ -104,6 +104,12 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 .btn.wa{background:#25d366;color:#052e16;text-align:center;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
 .filtertools{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 16px}.filtertools select{width:auto;min-width:150px;max-width:230px}
 .btn.faved{background:#ffe0e0;color:#b42318}
+.chatcompose{align-items:flex-end}
+.chatcompose textarea{resize:none;overflow-y:auto;max-height:140px;min-height:44px;line-height:1.4;font:inherit;padding:11px}
+.bubble{white-space:pre-wrap;overflow-wrap:anywhere}
+.chatcompose textarea{flex:1;min-width:0;width:auto}
+.msgmeta{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.delmsg{background:none;border:0;padding:2px 4px;font-size:14px;opacity:.7;cursor:pointer}.delmsg:hover{opacity:1}
 </style>
 </head>
 <body>
@@ -192,7 +198,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 
 <section class="panel hidden" id="messagesPanel"><div class="sectionhead"><div><div class="eyebrow">Discussions privées</div><h2>Mes messages</h2></div><button class="btn ghost" data-close="messagesPanel">Fermer</button></div>
 <div class="messages-layout"><div class="conversation-list" id="conversationList">Connecte-toi pour voir tes conversations.</div>
-<div class="chatbox"><strong id="chatTitle">Choisis une conversation</strong><div class="chatlog" id="chatLog"><p class="muted">Tes messages apparaîtront ici.</p></div><form id="messageForm" class="chatcompose"><input name="content" maxlength="2000" placeholder="Écrire un message…" required disabled><button class="btn dark" disabled>Envoyer</button></form></div></div>
+<div class="chatbox"><strong id="chatTitle">Choisis une conversation</strong><div class="chatlog" id="chatLog"><p class="muted">Tes messages apparaîtront ici.</p></div><form id="messageForm" class="chatcompose"><textarea name="content" rows="1" maxlength="2000" placeholder="Écrire un message…" required disabled></textarea><button class="btn dark" disabled>Envoyer</button></form></div></div>
 </section>
 </main>
 <footer>AFRIKA PULSE · Prototype connecté · Vérifie toujours les offres avant d'acheter.</footer>
@@ -620,14 +626,29 @@ async function openConversation(id,title){
  $("messageForm").elements.content.disabled=false;$("messageForm").querySelector("button").disabled=false;
  const {data,error}=await db.from("messages").select("*").eq("conversation_id",id).order("created_at",{ascending:true});
  if(error){toast(localizedError(error));return}
- $("chatLog").innerHTML=(data||[]).map(m=>`<div class="bubble ${m.sender_id===currentUser.id?"mine":""}">${esc(m.content)}<div class="muted">${new Date(m.created_at).toLocaleString("fr-FR")}</div></div>`).join("")||'<p class="muted">Commence la conversation.</p>';
+ $("chatLog").innerHTML=(data||[]).map(m=>`<div class="bubble ${m.sender_id===currentUser.id?"mine":""}">${esc(m.content)}<div class="muted msgmeta">${new Date(m.created_at).toLocaleString("fr-FR")}${m.sender_id===currentUser.id?`<button class="delmsg" data-delmsg="${esc(m.id)}" type="button" title="Supprimer ce message" aria-label="Supprimer ce message">🗑️</button>`:""}</div></div>`).join("")||'<p class="muted">Commence la conversation.</p>';
  $("chatLog").scrollTop=$("chatLog").scrollHeight;
 }
+$("chatLog").addEventListener("click",async e=>{
+ const b=e.target.closest("[data-delmsg]");if(!b||!currentUser)return;
+ if(!confirm("Supprimer ce message ? Cette action est définitive."))return;
+ const {data,error}=await db.from("messages").delete().eq("id",b.dataset.delmsg).eq("sender_id",currentUser.id).select();
+ if(error)return toast(localizedError(error));
+ if(!data||!data.length)return toast("La suppression n'est pas encore activée sur le site.");
+ toast("Message supprimé.");await openConversation(activeConversation,$("chatTitle").textContent);
+});
+(function(){
+ const ta=$("messageForm").elements.content;
+ const grow=()=>{ta.style.height="auto";ta.style.height=Math.min(ta.scrollHeight,140)+"px"};
+ ta.addEventListener("input",grow);
+ ta.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&matchMedia("(pointer:fine)").matches){e.preventDefault();$("messageForm").requestSubmit()}});
+ window.resetMessageBox=()=>{ta.value="";ta.style.height="auto"};
+})();
 $("messageForm").addEventListener("submit",async e=>{
  e.preventDefault();if(!activeConversation||!requireLogin())return;
  const input=e.currentTarget.elements.content,content=input.value.trim();if(!content)return;
  const {error}=await db.from("messages").insert({conversation_id:activeConversation,sender_id:currentUser.id,content});
- if(error)return toast(localizedError(error));input.value="";await openConversation(activeConversation,$("chatTitle").textContent);
+ if(error)return toast(localizedError(error));resetMessageBox();await openConversation(activeConversation,$("chatTitle").textContent);
 });
 goTo(location.hash.slice(1),{push:false,load:false,scroll:false});
 (async()=>{await refreshSession();if(db)await loadOffers()})();
