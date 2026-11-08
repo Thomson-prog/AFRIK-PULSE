@@ -331,6 +331,7 @@ function renderSupportDirect(){
 }
 renderSupportDirect();
 $("authSupport").onclick=()=>goTo("support");
+$("drawerSupport").onclick=()=>goTo("support");
 $("supportForm").addEventListener("submit",async e=>{
  e.preventDefault();if(!db)return;
  const form=e.currentTarget,f=new FormData(form);
