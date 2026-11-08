@@ -455,6 +455,7 @@ async function loadAdminRole(){
  }
  $("adminBtn").classList.toggle("hidden",!currentUser||!isAdmin);
  if(!isAdmin)$("adminPanel").classList.add("hidden");
+ try{renderOffers()}catch(e){}
 }
 $("signupForm").addEventListener("submit",async e=>{
  e.preventDefault();if(!db)return toast("Configure d'abord Supabase dans le code.");
@@ -542,11 +543,12 @@ function renderOffers(){
  $("offers").innerHTML=items.length?items.map(o=>{
  const link=safeUrl(o.url),mine=currentUser&&o.user_id===currentUser.id,waNum=String(o.whatsapp||"").replace(/\D/g,""),faved=favSet.has(String(o.id));
  const wa=waNum.length>=8&&waNum.length<=15?`<a class="btn wa" href="https://wa.me/${waNum}?text=${encodeURIComponent("Bonjour, je suis intéressé(e) par « "+o.title+" » sur AFRIKA PULSE.")}" target="_blank" rel="noopener noreferrer">💬 WhatsApp</a>`:"";
- return `<article class="card">${o.image_url?`<img class="offer-photo" src="${esc(o.image_url)}" alt="Photo de ${esc(o.title)}" loading="lazy">`:`<div class="visual"><span class="tag">${esc(o.category)}</span><span>${esc(icons[o.category]||"✨")}</span></div>`}<div class="cardbody"><h3>${esc(o.title)}</h3><p class="desc">${esc(o.description)}</p><div class="price">${esc(o.price||"Voir les détails")}</div><div class="meta"><span>📍 ${esc(o.place)}</span><span>Communauté</span></div>${link?`<a class="btn ghost" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Voir l'offre ↗</a>`:""}<div class="cardactions">${mine?'<button class="btn ghost" data-edit="'+esc(o.id)+'">Modifier</button><button class="btn danger" data-delete="'+esc(o.id)+'">Supprimer</button>':'<button class="btn dark" data-contact="'+esc(o.id)+'">Contacter l’auteur</button>'}${wa}<button class="btn ghost${faved?' faved':''}" data-fav="${esc(o.id)}">${faved?'❤️ Favori':'🤍 Favori'}</button>${mine?'':'<button class="btn ghost" data-report="'+esc(o.id)+'">🚩 Signaler</button>'}</div></div></article>`;
+ return `<article class="card">${o.image_url?`<img class="offer-photo" src="${esc(o.image_url)}" alt="Photo de ${esc(o.title)}" loading="lazy">`:`<div class="visual"><span class="tag">${esc(o.category)}</span><span>${esc(icons[o.category]||"✨")}</span></div>`}<div class="cardbody"><h3>${esc(o.title)}</h3><p class="desc">${esc(o.description)}</p><div class="price">${esc(o.price||"Voir les détails")}</div><div class="meta"><span>📍 ${esc(o.place)}</span><span>Communauté</span></div>${link?`<a class="btn ghost" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Voir l'offre ↗</a>`:""}<div class="cardactions">${mine?'<button class="btn ghost" data-edit="'+esc(o.id)+'">Modifier</button><button class="btn danger" data-delete="'+esc(o.id)+'">Supprimer</button>':'<button class="btn dark" data-contact="'+esc(o.id)+'">Contacter l’auteur</button>'}${wa}<button class="btn ghost${faved?' faved':''}" data-fav="${esc(o.id)}">${faved?'❤️ Favori':'🤍 Favori'}</button>${mine?'':'<button class="btn ghost" data-report="'+esc(o.id)+'">🚩 Signaler</button>'}${isAdmin&&!mine?'<button class="btn danger" data-admin-del="'+esc(o.id)+'">🛡️ Supprimer (admin)</button>':''}</div></div></article>`;
  }).join(""):'<div class="empty">Aucun bon plan trouvé pour le moment.</div>';
  $("offers").querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>editOffer(b.dataset.edit));
  $("offers").querySelectorAll("[data-delete]").forEach(b=>b.onclick=()=>deleteOffer(b.dataset.delete));
  $("offers").querySelectorAll("[data-contact]").forEach(b=>b.onclick=()=>startConversation(b.dataset.contact));
+ $("offers").querySelectorAll("[data-admin-del]").forEach(b=>b.onclick=()=>deleteOffer(b.dataset.adminDel,true));
  $("offers").querySelectorAll("[data-fav]").forEach(b=>b.onclick=()=>toggleFav(b.dataset.fav));
  $("offers").querySelectorAll("[data-report]").forEach(b=>b.onclick=()=>reportOffer(b.dataset.report));
 }
@@ -596,8 +598,9 @@ async function deleteOffer(id,adminMode=false){
  if(adminMode&&!isAdmin)return toast("Action réservée à l’administrateur.");
  let request=db.from("bons_plans").delete().eq("id",id);
  if(!adminMode)request=request.eq("user_id",currentUser.id);
- const {error}=await request;
+ const {data:gone,error}=await request.select();
  if(error)return toast(localizedError(error));
+ if(!gone||!gone.length)return toast(adminMode?"Suppression refusée : le droit administrateur n'est pas encore activé sur Supabase.":"Suppression impossible.");
  toast("Publication supprimée.");await loadOffers();await loadMyPosts();
  if(isAdmin&&!$("adminPanel").classList.contains("hidden"))await loadAdminPosts();
 }
