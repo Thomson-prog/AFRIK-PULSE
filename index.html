@@ -234,7 +234,8 @@ window.fetch=async function(input,init){
 };
 // Arrivée depuis le lien de confirmation e-mail ?
 const cameFromEmailLink=/access_token=|type=signup|type=email|[?&]code=/.test(location.hash+location.search);
-let emailLinkHandled=false;
+let emailLinkHandled=false,emailTokensTried=false;
+const emailHashParams=new URLSearchParams(location.hash.replace(/^#\/?/,""));
 const db = configured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY) : null;
 
 let currentUser = null, allOffers = [], category = "Tous", activeConversation = null, editingImageUrl = "", isAdmin = false;
@@ -391,8 +392,19 @@ $("search").addEventListener("input",renderOffers);$("searchBtn").onclick=render
 $("filters").addEventListener("click",e=>{const b=e.target.closest("[data-category]");if(!b)return;category=b.dataset.category;document.querySelectorAll(".chip").forEach(x=>x.classList.toggle("active",x===b));renderOffers()});
 function requireLogin(){if(!currentUser){toast("Connecte-toi ou crée un compte pour continuer.");goTo("compte");return false}return true}
 
+async function consumeEmailLinkTokens(){
+ if(emailTokensTried||!db)return;emailTokensTried=true;
+ const at=emailHashParams.get("access_token"),rt=emailHashParams.get("refresh_token");
+ if(at&&rt){
+  const {error}=await db.auth.setSession({access_token:at,refresh_token:rt});
+  if(error)toast("Le lien a expiré ou a déjà été utilisé. Connecte-toi avec ton e-mail et ton mot de passe.");
+ }else if(emailHashParams.get("error")){
+  toast("Le lien est invalide ou a expiré. Connecte-toi ou recrée ton compte.");
+ }
+}
 async function refreshSession(){
  if(!db){$("count").textContent="Configuration Supabase manquante";$("offers").innerHTML='<div class="empty">Ajoute ton API URL et ta Publishable key dans le code pour activer le site.</div>';return}
+ await consumeEmailLinkTokens();
  const {data:{session}}=await db.auth.getSession();currentUser=session?.user||null;sessionChecked=true;updateAuthUI();await loadAdminRole();
  if(!currentUser&&!autoAuthDone){autoAuthDone=true;goTo("compte",{push:false,scroll:false})}
  else if(!currentUser&&PROTECTED.includes(currentView))goTo("compte",{push:false});
