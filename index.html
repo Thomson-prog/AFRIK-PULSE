@@ -100,6 +100,10 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 #drawer .navactions{flex-direction:column;flex-wrap:nowrap}
 #drawer .navactions .btn{width:100%;text-align:left;padding:13px 15px}
 .authgrid{grid-template-columns:1fr!important;max-width:520px;margin:auto}.authswitch{width:100%;margin-top:12px}
+.linkbtn{background:none;border:0;color:var(--orange);font-weight:700;padding:0;text-decoration:underline;font-size:13px;text-align:left}
+.btn.wa{background:#25d366;color:#052e16;text-align:center;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.filtertools{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 16px}.filtertools select{width:auto;min-width:150px;max-width:230px}
+.btn.faved{background:#ffe0e0;color:#b42318}
 </style>
 </head>
 <body>
@@ -135,6 +139,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 <div class="toolbar"><div><div class="eyebrow">Espace membre</div><h2>Créer un compte ou se connecter</h2><p>Connecte-toi pour publier, gérer tes annonces et contacter un auteur.</p></div><span class="status" id="authStatus">Non connecté</span></div>
 <div class="authgrid">
 <div class="authbox" id="signupBox"><h3>Créer un compte</h3><form id="signupForm" class="fields" style="grid-template-columns:1fr">
+<label class="full">Nom d'utilisateur<input name="username" type="text" maxlength="30" autocomplete="nickname" required></label>
 <label class="full">Adresse e-mail<input name="email" type="email" autocomplete="email" required></label>
 <label class="full">Mot de passe<input name="password" type="password" minlength="8" autocomplete="new-password" required></label>
 <button class="btn dark" type="submit">Créer mon compte</button></form>
@@ -143,7 +148,9 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 <div class="authbox hidden" id="loginBox"><h3>Se connecter</h3><form id="loginForm" class="fields" style="grid-template-columns:1fr">
 <label class="full">Adresse e-mail<input name="email" type="email" autocomplete="email" required></label>
 <label class="full">Mot de passe<input name="password" type="password" autocomplete="current-password" required></label>
+<button class="linkbtn" id="forgotBtn" type="button">Mot de passe oublié ?</button>
 <button class="btn dark" type="submit">Connexion</button></form>
+<div id="resetNotice" class="signup-notice hidden" role="status"></div>
 <button class="btn light authswitch" id="toSignup" type="button">Je n'ai pas de compte → Créer un compte</button></div>
 </div>
 <div class="toolbar" style="margin:14px 0 0">
@@ -151,11 +158,14 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 </div>
 </section>
 
+<section id="resetPanel" class="panel hidden"><div class="eyebrow">Sécurité</div><h2>Choisis un nouveau mot de passe</h2>
+<form id="resetForm" class="fields" style="grid-template-columns:1fr;max-width:420px"><label class="full">Nouveau mot de passe<input name="password" type="password" minlength="8" autocomplete="new-password" required></label><button class="btn dark" type="submit">Enregistrer le mot de passe</button></form></section>
 <div id="homeView">
 <div class="sectionhead"><div><h2>À découvrir</h2><div class="muted" id="count">Chargement des bons plans…</div></div><button class="btn light" id="refreshBtn">↻ Actualiser</button></div>
 <div class="filters" id="filters">
-<button class="chip active" data-category="Tous">Tout voir</button><button class="chip" data-category="Alimentation">🍲 Alimentation</button><button class="chip" data-category="Mode">👟 Mode</button><button class="chip" data-category="Technologie">📱 Technologie</button><button class="chip" data-category="Services">🛠️ Services</button><button class="chip" data-category="Formation">🎓 Formation</button>
+<button class="chip active" data-category="Tous">Tout voir</button><button class="chip" data-category="Alimentation">🍲 Alimentation</button><button class="chip" data-category="Mode">👟 Mode</button><button class="chip" data-category="Technologie">📱 Technologie</button><button class="chip" data-category="Services">🛠️ Services</button><button class="chip" data-category="Formation">🎓 Formation</button><button class="chip" data-category="Favoris">❤️ Favoris</button>
 </div>
+<div class="filtertools"><select id="cityFilter" aria-label="Filtrer par ville"><option value="">📍 Toutes les villes</option></select><select id="sortSelect" aria-label="Trier"><option value="recent">Plus récents</option><option value="asc">Prix croissant</option><option value="desc">Prix décroissant</option></select></div>
 <section class="grid" id="offers" aria-live="polite"><div class="empty">Connexion à la base de données…</div></section>
 </div>
 
@@ -169,6 +179,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 <label>Ville / quartier<input name="place" maxlength="45" placeholder="Ex. Lomé, Agoè" required></label>
 <label>Prix ou avantage<input name="price" maxlength="35" placeholder="Ex. 5 000 FCFA ou gratuit"></label>
 <label class="full">Description et conditions<textarea name="description" maxlength="240" placeholder="Explique l'offre, sa durée et les conditions…" required></textarea></label>
+<label class="full">Numéro WhatsApp (facultatif)<input name="whatsapp" type="tel" maxlength="20" placeholder="Ex. +228 90 00 00 00"><span class="note">Avec l'indicatif du pays. Les acheteurs pourront t'écrire directement.</span></label>
 <label class="full">Lien utile (facultatif)<input name="url" type="url" placeholder="https://…"></label>
 <label class="full">Photo de l’article (facultatif)<input id="offerImage" name="image" type="file" accept="image/jpeg,image/png,image/webp"><span class="note">Formats JPG, PNG ou WebP · 5 Mo maximum.</span><img id="imagePreview" class="photo-preview hidden" alt="Aperçu de la photo sélectionnée"></label>
 <div class="formend"><span class="note">Tu dois être connecté pour publier un bon plan.</span><div><button class="btn ghost hidden" id="cancelEdit" type="button">Annuler</button> <button class="btn dark" type="submit">Publier le bon plan</button></div></div>
@@ -346,12 +357,13 @@ async function uploadOfferImage(file){
  if(error)throw error;
  return db.storage.from("offer-images").getPublicUrl(path).data.publicUrl;
 }
-const VIEWS={accueil:"homeView",compte:"authPanel",publier:"publishPanel",publications:"myPostsPanel",messages:"messagesPanel",admin:"adminPanel"};
+const VIEWS={accueil:"homeView",compte:"authPanel",publier:"publishPanel",publications:"myPostsPanel",reinitialiser:"resetPanel",messages:"messagesPanel",admin:"adminPanel"};
 const PROTECTED=["publications","messages","admin"];
 let currentView="accueil",autoAuthDone=false,sessionChecked=false;
 function afterEmailConfirm(){
  if(!cameFromEmailLink||emailLinkHandled||!currentUser)return;
  emailLinkHandled=true;
+ if(emailHashParams.get("type")==="recovery"){goTo("reinitialiser",{push:false});history.replaceState(null,"",location.pathname+"#reinitialiser");return}
  goTo("accueil",{push:false});
  history.replaceState(null,"",location.pathname+"#accueil");
  toast("Compte confirmé. Bienvenue !");
@@ -388,6 +400,7 @@ $("myPostsBtn").onclick=()=>{if(!requireLogin())return;goTo("publications")};
 $("messagesBtn").onclick=()=>{if(!requireLogin())return;goTo("messages")};
 $("adminBtn").onclick=()=>{if(!requireLogin()||!isAdmin)return;goTo("admin")};
 $("refreshBtn").onclick=loadOffers;
+$("cityFilter").addEventListener("change",renderOffers);$("sortSelect").addEventListener("change",renderOffers);
 $("search").addEventListener("input",renderOffers);$("searchBtn").onclick=renderOffers;
 $("filters").addEventListener("click",e=>{const b=e.target.closest("[data-category]");if(!b)return;category=b.dataset.category;document.querySelectorAll(".chip").forEach(x=>x.classList.toggle("active",x===b));renderOffers()});
 function requireLogin(){if(!currentUser){toast("Connecte-toi ou crée un compte pour continuer.");goTo("compte");return false}return true}
@@ -414,7 +427,7 @@ async function refreshSession(){
 }
 function updateAuthUI(){
  $("authStatus").textContent=currentUser?"Connecté":"Non connecté";
- $("sessionInfo").textContent=currentUser?`Connecté avec ${currentUser.email}`:"Aucun compte connecté.";
+ $("sessionInfo").textContent=currentUser?`Connecté en tant que ${currentUser.user_metadata?.username||currentUser.email} (${currentUser.email})`:"Aucun compte connecté.";
  $("logoutBtn").classList.toggle("hidden",!currentUser);
  $("drawerLogout").classList.toggle("hidden",!currentUser);
  $("homeBtn").classList.toggle("hidden",!currentUser);
@@ -440,7 +453,7 @@ async function loadAdminRole(){
 $("signupForm").addEventListener("submit",async e=>{
  e.preventDefault();if(!db)return toast("Configure d'abord Supabase dans le code.");
  const form=e.currentTarget,f=new FormData(form),email=String(f.get("email")).trim(),password=String(f.get("password"));
- const {data,error}=await db.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}});
+ const {data,error}=await db.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname,data:{username:String(f.get("username")).trim()}}});
  if(error)return toast(localizedError(error));
  form.reset();
  const notice=$("signupNotice");
@@ -468,27 +481,68 @@ $("loginForm").addEventListener("submit",async e=>{
  if(error)return toast(localizedError(error));
  form.reset();await refreshSession();toast("Connexion réussie.");goTo("accueil");await loadOffers();
 });
+$("forgotBtn").onclick=async()=>{
+ if(!db)return;
+ const email=String($("loginForm").elements.email.value).trim();
+ if(!email)return toast("Écris d'abord ton adresse e-mail dans le champ « Adresse e-mail ».");
+ const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+ if(error)return toast(localizedError(error));
+ const n=$("resetNotice");n.textContent="Un e-mail pour changer ton mot de passe a été envoyé à "+email+". Clique sur le lien reçu (vérifie aussi les spams).";n.classList.remove("hidden");
+};
+$("resetForm").addEventListener("submit",async e=>{
+ e.preventDefault();const form=e.currentTarget,password=String(new FormData(form).get("password"));
+ const {error}=await db.auth.updateUser({password});
+ if(error)return toast(localizedError(error));
+ form.reset();toast("Mot de passe modifié.");goTo("accueil");
+});
 $("logoutBtn").onclick=async()=>{await db.auth.signOut();currentUser=null;isAdmin=false;updateAuthUI();$("adminPanel").classList.add("hidden");activeConversation=null;toast("Déconnexion effectuée.");goTo("compte");await loadOffers()};
-if(db)db.auth.onAuthStateChange(async(_event,session)=>{currentUser=session?.user||null;sessionChecked=true;updateAuthUI();afterEmailConfirm();await loadAdminRole();});
+if(db)db.auth.onAuthStateChange(async(_event,session)=>{currentUser=session?.user||null;sessionChecked=true;updateAuthUI();if(_event==="PASSWORD_RECOVERY")goTo("reinitialiser",{push:false});afterEmailConfirm();await loadAdminRole();});
 
 async function loadOffers(){
  if(!db)return refreshSession();
  $("offers").innerHTML='<div class="empty">Chargement…</div>';
  const {data,error}=await db.from("bons_plans").select("*").eq("status","approved").order("created_at",{ascending:false});
  if(error){$("offers").innerHTML=`<div class="empty">${siteLanguage()==="en"?"Unable to load deals: ":"Impossible de charger les bons plans : "}${esc(localizedError(error))}</div>`;return}
- allOffers=data||[];renderOffers();
+ allOffers=data||[];fillCities();renderOffers();
+}
+function favKey(){return "ap-fav:"+(currentUser?currentUser.id:"guest")}
+function favs(){try{return new Set(JSON.parse(localStorage.getItem(favKey())||"[]").map(String))}catch(e){return new Set()}}
+function toggleFav(id){const f=favs();id=String(id);f.has(id)?f.delete(id):f.add(id);try{localStorage.setItem(favKey(),JSON.stringify([...f]))}catch(e){}renderOffers()}
+function priceNum(o){const p=String(o.price||"").toLowerCase();if(/gratuit|free/.test(p))return 0;const m=p.match(/\d[\d\s.,]*/);if(!m)return null;const n=parseInt(m[0].replace(/\D/g,""),10);return isNaN(n)?null:n}
+function sortOffers(list){
+ const mode=$("sortSelect").value;if(mode==="recent")return list;
+ const k=mode==="asc"?1:-1;
+ return [...list].sort((a,b)=>{const x=priceNum(a),y=priceNum(b);if(x===null&&y===null)return 0;if(x===null)return 1;if(y===null)return -1;return (x-y)*k});
+}
+function fillCities(){
+ const sel=$("cityFilter"),cur=sel.value,seen=new Map();
+ allOffers.forEach(o=>{const p=String(o.place||"").trim();if(p&&!seen.has(p.toLowerCase()))seen.set(p.toLowerCase(),p)});
+ sel.innerHTML='<option value="">📍 Toutes les villes</option>'+[...seen].sort((a,b)=>a[1].localeCompare(b[1])).map(([k,v])=>`<option value="${esc(k)}">${esc(v)}</option>`).join("");
+ sel.value=seen.has(cur)?cur:"";
+}
+async function reportOffer(id){
+ if(!requireLogin())return;
+ const reason=(prompt("Pourquoi signales-tu cette annonce ? (arnaque, contenu inapproprié…)")||"").trim();
+ if(!reason)return;
+ const {error}=await db.from("signalements").insert({offer_id:String(id),user_id:currentUser.id,reason:reason.slice(0,500)});
+ toast(error?"Le signalement n'est pas disponible pour le moment.":"Merci, ton signalement a été envoyé à l'administrateur.");
 }
 function renderOffers(){
  const q=$("search").value.trim().toLowerCase();
- const items=allOffers.filter(o=>(category==="Tous"||o.category===category)&&(!q||[o.title,o.description,o.place,o.category].join(" ").toLowerCase().includes(q)));
+ const city=$("cityFilter").value,favSet=favs();
+ let items=allOffers.filter(o=>(category==="Tous"||(category==="Favoris"?favSet.has(String(o.id)):o.category===category))&&(!city||String(o.place||"").trim().toLowerCase()===city)&&(!q||[o.title,o.description,o.place,o.category].join(" ").toLowerCase().includes(q)));
+ items=sortOffers(items);
  $("count").textContent=items.length+" bon(s) plan(s) affiché(s)";
  $("offers").innerHTML=items.length?items.map(o=>{
- const link=safeUrl(o.url),mine=currentUser&&o.user_id===currentUser.id;
- return `<article class="card">${o.image_url?`<img class="offer-photo" src="${esc(o.image_url)}" alt="Photo de ${esc(o.title)}" loading="lazy">`:`<div class="visual"><span class="tag">${esc(o.category)}</span><span>${esc(icons[o.category]||"✨")}</span></div>`}<div class="cardbody"><h3>${esc(o.title)}</h3><p class="desc">${esc(o.description)}</p><div class="price">${esc(o.price||"Voir les détails")}</div><div class="meta"><span>📍 ${esc(o.place)}</span><span>Communauté</span></div>${link?`<a class="btn ghost" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Voir l'offre ↗</a>`:""}<div class="cardactions">${mine?'<button class="btn ghost" data-edit="'+esc(o.id)+'">Modifier</button><button class="btn danger" data-delete="'+esc(o.id)+'">Supprimer</button>':'<button class="btn dark" data-contact="'+esc(o.id)+'">Contacter l’auteur</button>'}</div></div></article>`;
+ const link=safeUrl(o.url),mine=currentUser&&o.user_id===currentUser.id,waNum=String(o.whatsapp||"").replace(/\D/g,""),faved=favSet.has(String(o.id));
+ const wa=waNum.length>=8&&waNum.length<=15?`<a class="btn wa" href="https://wa.me/${waNum}?text=${encodeURIComponent("Bonjour, je suis intéressé(e) par « "+o.title+" » sur AFRIKA PULSE.")}" target="_blank" rel="noopener noreferrer">💬 WhatsApp</a>`:"";
+ return `<article class="card">${o.image_url?`<img class="offer-photo" src="${esc(o.image_url)}" alt="Photo de ${esc(o.title)}" loading="lazy">`:`<div class="visual"><span class="tag">${esc(o.category)}</span><span>${esc(icons[o.category]||"✨")}</span></div>`}<div class="cardbody"><h3>${esc(o.title)}</h3><p class="desc">${esc(o.description)}</p><div class="price">${esc(o.price||"Voir les détails")}</div><div class="meta"><span>📍 ${esc(o.place)}</span><span>Communauté</span></div>${link?`<a class="btn ghost" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Voir l'offre ↗</a>`:""}<div class="cardactions">${mine?'<button class="btn ghost" data-edit="'+esc(o.id)+'">Modifier</button><button class="btn danger" data-delete="'+esc(o.id)+'">Supprimer</button>':'<button class="btn dark" data-contact="'+esc(o.id)+'">Contacter l’auteur</button>'}${wa}<button class="btn ghost${faved?' faved':''}" data-fav="${esc(o.id)}">${faved?'❤️ Favori':'🤍 Favori'}</button>${mine?'':'<button class="btn ghost" data-report="'+esc(o.id)+'">🚩 Signaler</button>'}</div></div></article>`;
  }).join(""):'<div class="empty">Aucun bon plan trouvé pour le moment.</div>';
  $("offers").querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>editOffer(b.dataset.edit));
  $("offers").querySelectorAll("[data-delete]").forEach(b=>b.onclick=()=>deleteOffer(b.dataset.delete));
  $("offers").querySelectorAll("[data-contact]").forEach(b=>b.onclick=()=>startConversation(b.dataset.contact));
+ $("offers").querySelectorAll("[data-fav]").forEach(b=>b.onclick=()=>toggleFav(b.dataset.fav));
+ $("offers").querySelectorAll("[data-report]").forEach(b=>b.onclick=()=>reportOffer(b.dataset.report));
 }
 
 $("offerForm").addEventListener("submit",async e=>{
@@ -497,13 +551,15 @@ $("offerForm").addEventListener("submit",async e=>{
  const file=$("offerImage").files[0];
  let imageUrl;
  try{imageUrl=await uploadOfferImage(file)}catch(err){toast("Échec de l’envoi de la photo : "+err.message);return}
- const payload={title:String(f.get("title")).trim(),category:String(f.get("category")),place:String(f.get("place")).trim(),price:String(f.get("price")).trim(),description:String(f.get("description")).trim(),url:safeUrl(String(f.get("url")).trim()),image_url:imageUrl,status:"approved",updated_at:new Date().toISOString()};
- let result;
- if(id)result=await db.from("bons_plans").update(payload).eq("id",id).eq("user_id",currentUser.id);
- else result=await db.from("bons_plans").insert({...payload,user_id:currentUser.id});
+ const wnum=String(f.get("whatsapp")||"").trim();
+ const payload={...(wnum?{whatsapp:wnum}:{}),title:String(f.get("title")).trim(),category:String(f.get("category")),place:String(f.get("place")).trim(),price:String(f.get("price")).trim(),description:String(f.get("description")).trim(),url:safeUrl(String(f.get("url")).trim()),image_url:imageUrl,status:"approved",updated_at:new Date().toISOString()};
+ let result,waLost=false;
+ const save=()=>id?db.from("bons_plans").update(payload).eq("id",id).eq("user_id",currentUser.id):db.from("bons_plans").insert({...payload,user_id:currentUser.id});
+ result=await save();
+ if(result.error&&payload.whatsapp&&/whatsapp/i.test(result.error.message||"")){delete payload.whatsapp;waLost=true;result=await save()}
  if(result.error){toast(localizedError(result.error));return}
  resetOfferEditor();
- toast(id?"Bon plan modifié et publié.":"Bon plan publié automatiquement.");
+ toast(waLost?"Publié, mais le numéro WhatsApp n'est pas encore activé sur le site.":id?"Bon plan modifié et publié.":"Bon plan publié automatiquement.");
  await loadOffers();await loadMyPosts();
 });
 async function loadMyPosts(){
@@ -524,7 +580,7 @@ async function editOffer(id){
  if(!requireLogin())return;
  const {data,error}=await db.from("bons_plans").select("*").eq("id",id).single();
  if(error)return toast(localizedError(error));if(data.user_id!==currentUser.id)return toast("Cette publication ne t'appartient pas.");
- const form=$("offerForm");["id","title","category","place","price","description","url"].forEach(k=>form.elements[k].value=data[k]??"");
+ const form=$("offerForm");["id","title","category","place","price","description","url","whatsapp"].forEach(k=>form.elements[k].value=data[k]??"");
  editingImageUrl=data.image_url||"";$("imagePreview").src=editingImageUrl;$("imagePreview").classList.toggle("hidden",!editingImageUrl);
  $("formHeading").textContent="Modifier ton bon plan";$("cancelEdit").classList.remove("hidden");goTo("publier",{load:false});
 }
