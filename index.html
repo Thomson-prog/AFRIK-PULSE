@@ -145,6 +145,8 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 .burger{position:relative}.burger.has-dot::after{content:"";position:absolute;top:5px;right:5px;width:13px;height:13px;border-radius:50%;background:#e5383b;border:2px solid #101b35}
 .countbadge{display:inline-block;background:#e5383b;color:#fff;border-radius:999px;font-size:12px;font-weight:800;padding:1px 8px;margin-left:8px}
 .newdot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#e5383b;margin-left:8px}
+.star{color:#f5b301}.star.off{color:#f5b301;opacity:.3}
+.avatar{border-radius:50%;object-fit:cover;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -203,6 +205,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 <form id="profileForm" class="fields hidden" style="grid-template-columns:1fr;max-width:420px;margin-top:16px"><h3>Mon profil</h3>
 <label class="full">Nom d'utilisateur<input name="username" maxlength="30" required></label>
 <label class="full">Ma ville<input name="city" maxlength="60" placeholder="Ex. Lomé"></label>
+<label class="full">Photo de profil<input name="avatar" type="file" accept="image/jpeg,image/png,image/webp"></label><img id="avatarPreview" class="avatar hidden" width="72" height="72" alt="">
 <button class="btn dark" type="submit">Enregistrer mon profil</button></form>
 <p style="margin-top:14px"><button class="linkbtn" id="authSupport" type="button">Besoin d'aide ? Contacter le support</button></p>
 </section>
@@ -484,6 +487,10 @@ setInterval(async()=>{
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkUnread()});
 
 // ===== Partage, profil, avis, populaires, autour de moi =====
+async function notifyUser(uid,title,body){
+ if(!uid||!currentUser||uid===currentUser.id)return;
+ try{await db.from("notifications").insert({user_id:uid,title,body})}catch(e){}
+}
 async function shareOffer(id){
  const o=allOffers.find(x=>String(x.id)===String(id));if(!o)return;
  const url=location.origin+location.pathname+"?offre="+encodeURIComponent(id);
@@ -498,35 +505,47 @@ const io=new IntersectionObserver(es=>es.forEach(e=>{
  try{sessionStorage.setItem("ap-views",JSON.stringify([...seenViews]))}catch(x){}
  db.rpc("increment_views",{p_id:String(id)}).then(()=>{},()=>{});
 }),{threshold:.6});
-const stars=n=>"★".repeat(Math.round(n))+"☆".repeat(5-Math.round(n));
+const stars=n=>`<span class="star">${"★".repeat(Math.round(n))}</span><span class="star off">${"★".repeat(5-Math.round(n))}</span>`;
 async function showAuthor(uid){
  const b=$("authorBanner");b.classList.remove("hidden");b.textContent="Chargement du profil…";
  const count=allOffers.filter(o=>o.user_id===uid).length;
  const {data:rv}=await db.from("reviews").select("*").eq("seller_id",uid).order("created_at",{ascending:false}).limit(20);
  const list=rv||[],avg=list.length?list.reduce((a,r)=>a+r.rating,0)/list.length:0;
  const canReview=currentUser&&currentUser.id!==uid;
- b.innerHTML=`<h3>👤 ${esc(profiles[uid]||"Membre")}</h3><p class="muted">${profCity[uid]?"📍 "+esc(profCity[uid])+" · ":""}${count} annonce(s) · ${list.length?`<strong>${stars(avg)}</strong> ${avg.toFixed(1)}/5 (${list.length} avis)`:"Aucun avis"}</p>
+ b.innerHTML=`<h3>${avatarImg(uid,56)} ${esc(profiles[uid]||"Membre")}</h3><p class="muted">${profCity[uid]?"📍 "+esc(profCity[uid])+" · ":""}${count} annonce(s) · ${list.length?`<strong>${stars(avg)}</strong> ${avg.toFixed(1)}/5 (${list.length} avis)`:"Aucun avis"}</p>
  ${list.slice(0,5).map(r=>`<p><strong>${stars(r.rating)}</strong> ${esc(r.comment||"")}</p>`).join("")}
  ${canReview?`<form id="reviewForm" class="fields" style="grid-template-columns:1fr;max-width:420px"><label class="full">Ta note<select name="rating"><option value="5">★★★★★ Excellent</option><option value="4">★★★★☆ Bien</option><option value="3">★★★☆☆ Moyen</option><option value="2">★★☆☆☆ Décevant</option><option value="1">★☆☆☆☆ Mauvais</option></select></label><label class="full">Ton avis<textarea name="comment" rows="2" maxlength="500"></textarea></label><button class="btn dark" type="submit">Publier mon avis</button><span class="note">Tu peux noter un vendeur après l'avoir contacté.</span></form>`:""}`;
  const f=$("reviewForm");if(f)f.onsubmit=async e=>{
   e.preventDefault();const fd=new FormData(f);
   const {error}=await db.from("reviews").upsert({seller_id:uid,reviewer_id:currentUser.id,rating:Number(fd.get("rating")),comment:String(fd.get("comment")||"").trim()},{onConflict:"seller_id,reviewer_id"});
   if(error)return toast("Tu peux noter ce vendeur seulement après l'avoir contacté.");
-  toast("Merci pour ton avis.");showAuthor(uid);
+  toast("Merci pour ton avis.");$("authorBanner").classList.add("hidden");
  };
 }
 async function loadMyProfile(){
  if(!currentUser||profileFor===currentUser.id)return;profileFor=currentUser.id;
- const {data}=await db.from("profiles").select("username,city").eq("id",currentUser.id).maybeSingle();
+ let {data,error:pe}=await db.from("profiles").select("username,city,avatar_url").eq("id",currentUser.id).maybeSingle();
+ if(pe)({data}=await db.from("profiles").select("username,city").eq("id",currentUser.id).maybeSingle());
+ if(data&&data.avatar_url){const p=$("avatarPreview");p.src=data.avatar_url;p.classList.remove("hidden")}
  const f=$("profileForm");f.elements.username.value=(data&&data.username&&data.username!=="Membre"?data.username:currentUser.user_metadata?.username)||"";
  f.elements.city.value=(data&&data.city)||"";myCity=(data&&data.city)||"";
 }
 $("profileForm").addEventListener("submit",async e=>{
  e.preventDefault();const f=e.currentTarget,fd=new FormData(f);
  const row={id:currentUser.id,username:String(fd.get("username")).trim(),city:String(fd.get("city")||"").trim()};
- const {error}=await db.from("profiles").upsert(row);
+ const file=fd.get("avatar");
+ if(file&&file.size){
+  if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>5*1024*1024)return toast("Choisis une image JPG, PNG ou WebP de 5 Mo maximum.");
+  try{const ext=file.type==="image/png"?"png":file.type==="image/webp"?"webp":"jpg",path=`${currentUser.id}/avatar-${crypto.randomUUID()}.${ext}`;
+   const up=await db.storage.from("offer-images").upload(path,file,{contentType:file.type});if(up.error)throw up.error;
+   row.avatar_url=db.storage.from("offer-images").getPublicUrl(path).data.publicUrl;
+   const p=$("avatarPreview");p.src=row.avatar_url;p.classList.remove("hidden");
+  }catch(err){return toast("Envoi de la photo impossible : "+(err.message||err))}
+ }
+ let {error}=await db.from("profiles").upsert(row);
+ if(error&&row.avatar_url&&/avatar_url/i.test(error.message||"")){delete row.avatar_url;({error}=await db.from("profiles").upsert(row));if(!error)toast("Profil enregistré, mais la photo n'est pas encore activée sur le site.")}
  if(error)return toast("Enregistrement impossible : "+(error.message||""));
- myCity=row.city;toast("Profil enregistré.");loadOffers();
+ myCity=row.city;if(!error)toast("Profil enregistré.");f.elements.avatar.value="";loadOffers();
 });
 $("nearBtn").onclick=()=>{
  if(!currentUser||!myCity){toast("Indique ta ville dans « Mon compte » pour voir les annonces autour de toi.");goTo("compte");return}
@@ -763,13 +782,14 @@ async function loadOffers(){
  const {data,error}=await db.from("bons_plans").select("*").eq("status","approved").order("created_at",{ascending:false});
  if(error){$("offers").innerHTML=`<div class="empty">${siteLanguage()==="en"?"Unable to load deals: ":"Impossible de charger les bons plans : "}${esc(localizedError(error))}</div>`;return}
  allOffers=data||[];
- try{const ids=[...new Set(allOffers.map(o=>o.user_id).filter(Boolean))];if(ids.length){let r=await db.from("profiles").select("id,username,city").in("id",ids);if(r.error)r=await db.from("profiles").select("id,username").in("id",ids);(r.data||[]).forEach(p=>{profiles[p.id]=p.username;profCity[p.id]=p.city||""})}}catch(e){}
+ try{const ids=[...new Set(allOffers.map(o=>o.user_id).filter(Boolean))];if(ids.length){let r=await db.from("profiles").select("id,username,city,avatar_url").in("id",ids);if(r.error)r=await db.from("profiles").select("id,username,city").in("id",ids);if(r.error)r=await db.from("profiles").select("id,username").in("id",ids);(r.data||[]).forEach(p=>{profiles[p.id]=p.username;profCity[p.id]=p.city||"";profAvatar[p.id]=p.avatar_url||""})}}catch(e){}
  fillCities();
  const dp=new URLSearchParams(location.search).get("offre");
  if(dp&&!deepDone){deepDone=true;offerFilter=dp;const b=$("authorBanner");b.innerHTML=`Tu vois une annonce partagée. <button class="linkbtn" id="seeAll" type="button">Voir toutes les annonces</button>`;b.classList.remove("hidden");$("seeAll").onclick=()=>{offerFilter=null;b.classList.add("hidden");history.replaceState(null,"",location.pathname+location.hash);renderOffers()}}
  renderOffers();
 }
-let authorFilter=null,offerFilter=null,deepDone=false,myCity="",profileFor=null;const profiles={},profCity={};
+let authorFilter=null,offerFilter=null,deepDone=false,myCity="",profileFor=null;const profiles={},profCity={},profAvatar={};
+const avatarImg=(uid,n)=>profAvatar[uid]?`<img class="avatar" src="${esc(profAvatar[uid])}" width="${n}" height="${n}" alt="">`:"👤";
 function favKey(){return "ap-fav:"+(currentUser?currentUser.id:"guest")}
 function favs(){try{return new Set(JSON.parse(localStorage.getItem(favKey())||"[]").map(String))}catch(e){return new Set()}}
 function toggleFav(id){const f=favs();id=String(id);f.has(id)?f.delete(id):f.add(id);try{localStorage.setItem(favKey(),JSON.stringify([...f]))}catch(e){}renderOffers()}
@@ -805,7 +825,7 @@ function renderOffers(){
  $("offers").innerHTML=items.length?items.map(o=>{
  const link=safeUrl(o.url),mine=currentUser&&o.user_id===currentUser.id,waNum=String(o.whatsapp||"").replace(/\D/g,""),faved=favSet.has(String(o.id));
  const wa=waNum.length>=8&&waNum.length<=15?`<a class="btn wa" href="https://wa.me/${waNum}?text=${encodeURIComponent("Bonjour, je suis intéressé(e) par « "+o.title+" » sur AFRIKA PULSE.")}" target="_blank" rel="noopener noreferrer">💬 WhatsApp</a>`:"";
- return `<article class="card${o.sold?' sold':''}" data-oid="${esc(o.id)}" data-mine="${mine?1:0}">${o.image_url?`<img class="offer-photo" src="${esc(o.image_url)}" alt="Photo de ${esc(o.title)}" loading="lazy">`:`<div class="visual"><span class="tag">${esc(o.category)}</span><span>${esc(icons[o.category]||"✨")}</span></div>`}<div class="cardbody"><h3>${o.featured?'⭐ ':''}${esc(o.title)}${o.sold?'<span class="badge-sold">VENDU</span>':''}</h3><p class="desc">${esc(o.description)}</p><div class="price">${esc(o.price||"Voir les détails")}</div><div class="meta"><span>📍 ${esc(o.place)}</span><span>👁 ${o.views||0}</span><span>${o.user_id?`<button class="linkbtn" data-author="${esc(o.user_id)}" type="button">👤 ${esc(profiles[o.user_id]||"Membre")}</button>`:"Communauté"}</span></div>${link?`<a class="btn ghost" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Voir l'offre ↗</a>`:""}<div class="cardactions">${mine?'<button class="btn ghost" data-edit="'+esc(o.id)+'">Modifier</button><button class="btn danger" data-delete="'+esc(o.id)+'">Supprimer</button>':'<button class="btn dark" data-contact="'+esc(o.id)+'">Contacter l’auteur</button>'}${wa}<button class="btn ghost" data-share="${esc(o.id)}">🔗 Partager</button><button class="btn ghost${faved?' faved':''}" data-fav="${esc(o.id)}">${faved?'❤️ Favori':'🤍 Favori'}</button>${mine?'':'<button class="btn ghost" data-report="'+esc(o.id)+'">🚩 Signaler</button>'}${isAdmin&&!mine?'<button class="btn danger" data-admin-del="'+esc(o.id)+'">🛡️ Supprimer (admin)</button>':''}</div></div></article>`;
+ return `<article class="card${o.sold?' sold':''}" data-oid="${esc(o.id)}" data-mine="${mine?1:0}">${o.image_url?`<img class="offer-photo" src="${esc(o.image_url)}" alt="Photo de ${esc(o.title)}" loading="lazy">`:`<div class="visual"><span class="tag">${esc(o.category)}</span><span>${esc(icons[o.category]||"✨")}</span></div>`}<div class="cardbody"><h3>${o.featured?'⭐ ':''}${esc(o.title)}${o.sold?'<span class="badge-sold">VENDU</span>':''}</h3><p class="desc">${esc(o.description)}</p><div class="price">${esc(o.price||"Voir les détails")}</div><div class="meta"><span>📍 ${esc(o.place)}</span><span>👁 ${o.views||0}</span><span>${o.user_id?`<button class="linkbtn" data-author="${esc(o.user_id)}" type="button">${avatarImg(o.user_id,22)} ${esc(profiles[o.user_id]||"Membre")}</button>`:"Communauté"}</span></div>${link?`<a class="btn ghost" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Voir l'offre ↗</a>`:""}<div class="cardactions">${mine?'<button class="btn ghost" data-edit="'+esc(o.id)+'">Modifier</button><button class="btn danger" data-delete="'+esc(o.id)+'">Supprimer</button>':'<button class="btn dark" data-contact="'+esc(o.id)+'">Contacter l’auteur</button>'}${wa}<button class="btn ghost" data-share="${esc(o.id)}">🔗 Partager</button><button class="btn ghost${faved?' faved':''}" data-fav="${esc(o.id)}">${faved?'❤️ Favori':'🤍 Favori'}</button>${mine?'':'<button class="btn ghost" data-report="'+esc(o.id)+'">🚩 Signaler</button>'}${isAdmin&&!mine?'<button class="btn danger" data-admin-del="'+esc(o.id)+'">🛡️ Supprimer (admin)</button>':''}</div></div></article>`;
  }).join(""):'<div class="empty">Aucun bon plan trouvé pour le moment.</div>';
  $("offers").querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>editOffer(b.dataset.edit));
  $("offers").querySelectorAll("[data-delete]").forEach(b=>b.onclick=()=>deleteOffer(b.dataset.delete));
@@ -856,6 +876,7 @@ async function loadAdminPosts(){
  $("adminPosts").innerHTML=(data||[]).length?data.map(o=>`<article class="card">${o.image_url?`<img class="offer-photo" src="${esc(o.image_url)}" alt="Photo de ${esc(o.title)}" loading="lazy">`:''}<div class="cardbody"><span class="status ${esc(o.status)}">${o.status==="approved"?"Publié":o.status==="rejected"?"Refusé":"En attente"}</span><h3>${esc(o.title)}</h3><p class="desc">${esc(o.description)}</p><div class="meta"><span>📍 ${esc(o.place)}</span><span>Auteur : ${esc(o.user_id)}</span></div><div class="cardactions"><button class="btn light" data-feature="${esc(o.id)}" data-on="${o.featured?1:0}">${o.featured?"Retirer ⭐":"Mettre en avant ⭐"}</button><button class="btn danger" data-admin-delete="${esc(o.id)}">Supprimer cette publication</button></div></div></article>`).join(""):'<div class="empty">Aucune publication.</div>';
  $("adminPosts").querySelectorAll("[data-feature]").forEach(b=>b.onclick=async()=>{
   const {data:d,error:er}=await db.from("bons_plans").update({featured:b.dataset.on!=="1"}).eq("id",b.dataset.feature).select();
+  if(!er&&d&&d[0]&&b.dataset.on!=="1")notifyUser(d[0].user_id,"Annonce mise en avant ⭐","Bonne nouvelle : ton annonce « "+d[0].title+" » est maintenant mise en avant.");
   if(er)return toast("Erreur : "+(er.message||er.code));
   if(!d||!d.length)return toast("Aucune ligne modifiée : le droit administrateur de modifier n'est pas activé sur Supabase.");
   toast(b.dataset.on==="1"?"Retirée de la une.":"Annonce mise en avant ⭐");await loadOffers();await loadAdminPosts();
@@ -876,9 +897,11 @@ async function deleteOffer(id,adminMode=false){
  if(adminMode&&!isAdmin)return toast("Action réservée à l’administrateur.");
  let request=db.from("bons_plans").delete().eq("id",id);
  if(!adminMode)request=request.eq("user_id",currentUser.id);
+ const {data:orow}=adminMode?await db.from("bons_plans").select("title,user_id").eq("id",id).maybeSingle():{data:null};
  const {data:gone,error}=await request.select();
  if(error)return toast(localizedError(error));
  if(!gone||!gone.length)return toast(adminMode?"Suppression refusée : le droit administrateur n'est pas encore activé sur Supabase.":"Suppression impossible.");
+ if(orow)notifyUser(orow.user_id,"Annonce supprimée","Ton annonce « "+orow.title+" » a été supprimée par l'administrateur car elle ne respecte pas les règles du site.");
  toast("Publication supprimée.");await loadOffers();await loadMyPosts();
  if(isAdmin&&!$("adminPanel").classList.contains("hidden"))await loadAdminPosts();
 }
