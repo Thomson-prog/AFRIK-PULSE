@@ -147,6 +147,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 .newdot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#e5383b;margin-left:8px}
 .star{color:#f5b301}.star.off{color:#f5b301;opacity:.3}
 .avatar{border-radius:50%;object-fit:cover;vertical-align:middle}
+.cbox{margin-top:10px;border-top:1px solid var(--line);padding-top:10px}.cmt p{margin:4px 0 10px;overflow-wrap:anywhere}.cform{display:flex;gap:8px}.cform input{flex:1;min-width:0}
 </style>
 </head>
 <body>
@@ -215,7 +216,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 <div id="homeView">
 <div class="sectionhead"><div><h2>À découvrir</h2><div class="muted" id="count">Chargement des bons plans…</div></div><button class="btn light" id="refreshBtn">↻ Actualiser</button></div>
 <div class="filters" id="filters">
-<button class="chip active" data-category="Tous">Tout voir</button><button class="chip" data-category="Alimentation">🍲 Alimentation</button><button class="chip" data-category="Mode">👟 Mode</button><button class="chip" data-category="Technologie">📱 Technologie</button><button class="chip" data-category="Services">🛠️ Services</button><button class="chip" data-category="Formation">🎓 Formation</button><button class="chip" data-category="Favoris">❤️ Favoris</button><button class="chip" data-category="Populaires">🔥 Populaires</button>
+<button class="chip active" data-category="Tous">Tout voir</button><button class="chip" data-category="Alimentation">🍲 Alimentation</button><button class="chip" data-category="Mode">👟 Mode</button><button class="chip" data-category="Technologie">📱 Technologie</button><button class="chip" data-category="Services">🛠️ Services</button><button class="chip" data-category="Formation">🎓 Formation</button><button class="chip" data-category="Favoris">🔖 Enregistrés</button><button class="chip" data-category="Populaires">🔥 Populaires</button>
 </div>
 <div class="filtertools"><select id="cityFilter" aria-label="Filtrer par ville"><option value="">📍 Toutes les villes</option></select><select id="sortSelect" aria-label="Trier"><option value="recent">Plus récents</option><option value="asc">Prix croissant</option><option value="desc">Prix décroissant</option></select><button class="btn light" id="nearBtn" type="button">📍 Autour de moi</button></div>
 <div id="authorBanner" class="panel hidden" style="margin:0 0 16px"></div>
@@ -553,6 +554,40 @@ $("nearBtn").onclick=()=>{
  if(!opt)return toast("Aucune annonce à "+myCity+" pour le moment.");
  sel.value=opt.value;renderOffers();
 };
+
+// ===== J'aime et commentaires =====
+let likeCount={},myLikes=new Set(),comCount={};const openComments=new Set();
+async function loadReactions(){
+ try{
+  const [l,c]=await Promise.all([db.from("likes").select("offer_id,user_id").limit(5000),db.from("comments").select("offer_id").limit(5000)]);
+  likeCount={};myLikes=new Set();comCount={};
+  (l.data||[]).forEach(x=>{likeCount[x.offer_id]=(likeCount[x.offer_id]||0)+1;if(currentUser&&x.user_id===currentUser.id)myLikes.add(x.offer_id)});
+  (c.data||[]).forEach(x=>comCount[x.offer_id]=(comCount[x.offer_id]||0)+1);
+ }catch(e){}
+}
+async function toggleLike(id){
+ if(!requireLogin())return;const k=String(id),had=myLikes.has(k);
+ if(had){myLikes.delete(k);likeCount[k]=Math.max(0,(likeCount[k]||1)-1)}else{myLikes.add(k);likeCount[k]=(likeCount[k]||0)+1}
+ renderOffers();
+ const r=had?await db.from("likes").delete().eq("offer_id",k).eq("user_id",currentUser.id):await db.from("likes").insert({offer_id:k});
+ if(r.error){await loadReactions();renderOffers();toast("Action impossible pour le moment.")}
+}
+async function showComments(k){
+ const box=document.querySelector(`[data-cbox="${CSS.escape(k)}"]`);if(!box)return;
+ openComments.add(k);box.classList.remove("hidden");
+ const {data}=await db.from("comments").select("*").eq("offer_id",k).order("created_at",{ascending:true}).limit(50);
+ const list=data||[],need=[...new Set(list.map(c=>c.user_id).filter(u=>!(u in profiles)))];
+ if(need.length){const r=await db.from("profiles").select("id,username").in("id",need);(r.data||[]).forEach(p=>profiles[p.id]=p.username)}
+ box.innerHTML=(list.length?list.map(c=>`<div class="cmt"><strong>${esc(profiles[c.user_id]||"Membre")}</strong> <span class="muted">${new Date(c.created_at).toLocaleDateString("fr-FR")}</span>${currentUser&&(c.user_id===currentUser.id||isAdmin)?` <button class="delmsg" data-delcmt="${esc(c.id)}" type="button" aria-label="Supprimer">🗑️</button>`:""}<p>${esc(c.content)}</p></div>`).join(""):'<p class="muted">Aucun commentaire. Sois le premier !</p>')+'<form class="cform"><input maxlength="500" placeholder="Écrire un commentaire…" required><button class="btn dark" type="submit">Envoyer</button></form>';
+ box.querySelectorAll("[data-delcmt]").forEach(b=>b.onclick=async()=>{if(!confirm("Supprimer ce commentaire ?"))return;await db.from("comments").delete().eq("id",b.dataset.delcmt);await loadReactions();renderOffers()});
+ box.querySelector("form").onsubmit=async e=>{
+  e.preventDefault();if(!requireLogin())return;
+  const text=e.currentTarget.querySelector("input").value.trim();if(!text)return;
+  const {error}=await db.from("comments").insert({offer_id:k,content:text});
+  if(error)return toast("Commentaire impossible pour le moment.");
+  await loadReactions();renderOffers();
+ };
+}
 // ===== Thème clair / sombre (préférence propre à chaque utilisateur) =====
 const Theme={
  key(){return currentUser?`ap-theme:${currentUser.id}`:"ap-theme"},
@@ -783,6 +818,7 @@ async function loadOffers(){
  if(error){$("offers").innerHTML=`<div class="empty">${siteLanguage()==="en"?"Unable to load deals: ":"Impossible de charger les bons plans : "}${esc(localizedError(error))}</div>`;return}
  allOffers=data||[];
  try{const ids=[...new Set(allOffers.map(o=>o.user_id).filter(Boolean))];if(ids.length){let r=await db.from("profiles").select("id,username,city,avatar_url").in("id",ids);if(r.error)r=await db.from("profiles").select("id,username,city").in("id",ids);if(r.error)r=await db.from("profiles").select("id,username").in("id",ids);(r.data||[]).forEach(p=>{profiles[p.id]=p.username;profCity[p.id]=p.city||"";profAvatar[p.id]=p.avatar_url||""})}}catch(e){}
+ await loadReactions();
  fillCities();
  const dp=new URLSearchParams(location.search).get("offre");
  if(dp&&!deepDone){deepDone=true;offerFilter=dp;const b=$("authorBanner");b.innerHTML=`Tu vois une annonce partagée. <button class="linkbtn" id="seeAll" type="button">Voir toutes les annonces</button>`;b.classList.remove("hidden");$("seeAll").onclick=()=>{offerFilter=null;b.classList.add("hidden");history.replaceState(null,"",location.pathname+location.hash);renderOffers()}}
@@ -825,13 +861,16 @@ function renderOffers(){
  $("offers").innerHTML=items.length?items.map(o=>{
  const link=safeUrl(o.url),mine=currentUser&&o.user_id===currentUser.id,waNum=String(o.whatsapp||"").replace(/\D/g,""),faved=favSet.has(String(o.id));
  const wa=waNum.length>=8&&waNum.length<=15?`<a class="btn wa" href="https://wa.me/${waNum}?text=${encodeURIComponent("Bonjour, je suis intéressé(e) par « "+o.title+" » sur AFRIKA PULSE.")}" target="_blank" rel="noopener noreferrer">💬 WhatsApp</a>`:"";
- return `<article class="card${o.sold?' sold':''}" data-oid="${esc(o.id)}" data-mine="${mine?1:0}">${o.image_url?`<img class="offer-photo" src="${esc(o.image_url)}" alt="Photo de ${esc(o.title)}" loading="lazy">`:`<div class="visual"><span class="tag">${esc(o.category)}</span><span>${esc(icons[o.category]||"✨")}</span></div>`}<div class="cardbody"><h3>${o.featured?'⭐ ':''}${esc(o.title)}${o.sold?'<span class="badge-sold">VENDU</span>':''}</h3><p class="desc">${esc(o.description)}</p><div class="price">${esc(o.price||"Voir les détails")}</div><div class="meta"><span>📍 ${esc(o.place)}</span><span>👁 ${o.views||0}</span><span>${o.user_id?`<button class="linkbtn" data-author="${esc(o.user_id)}" type="button">${avatarImg(o.user_id,22)} ${esc(profiles[o.user_id]||"Membre")}</button>`:"Communauté"}</span></div>${link?`<a class="btn ghost" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Voir l'offre ↗</a>`:""}<div class="cardactions">${mine?'<button class="btn ghost" data-edit="'+esc(o.id)+'">Modifier</button><button class="btn danger" data-delete="'+esc(o.id)+'">Supprimer</button>':'<button class="btn dark" data-contact="'+esc(o.id)+'">Contacter l’auteur</button>'}${wa}<button class="btn ghost" data-share="${esc(o.id)}">🔗 Partager</button><button class="btn ghost${faved?' faved':''}" data-fav="${esc(o.id)}">${faved?'❤️ Favori':'🤍 Favori'}</button>${mine?'':'<button class="btn ghost" data-report="'+esc(o.id)+'">🚩 Signaler</button>'}${isAdmin&&!mine?'<button class="btn danger" data-admin-del="'+esc(o.id)+'">🛡️ Supprimer (admin)</button>':''}</div></div></article>`;
+ return `<article class="card${o.sold?' sold':''}" data-oid="${esc(o.id)}" data-mine="${mine?1:0}">${o.image_url?`<img class="offer-photo" src="${esc(o.image_url)}" alt="Photo de ${esc(o.title)}" loading="lazy">`:`<div class="visual"><span class="tag">${esc(o.category)}</span><span>${esc(icons[o.category]||"✨")}</span></div>`}<div class="cardbody"><h3>${o.featured?'⭐ ':''}${esc(o.title)}${o.sold?'<span class="badge-sold">VENDU</span>':''}</h3><p class="desc">${esc(o.description)}</p><div class="price">${esc(o.price||"Voir les détails")}</div><div class="meta"><span>📍 ${esc(o.place)}</span><span>👁 ${o.views||0}</span><span>${o.user_id?`<button class="linkbtn" data-author="${esc(o.user_id)}" type="button">${avatarImg(o.user_id,22)} ${esc(profiles[o.user_id]||"Membre")}</button>`:"Communauté"}</span></div>${link?`<a class="btn ghost" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Voir l'offre ↗</a>`:""}<div class="cardactions">${mine?'<button class="btn ghost" data-edit="'+esc(o.id)+'">Modifier</button><button class="btn danger" data-delete="'+esc(o.id)+'">Supprimer</button>':'<button class="btn dark" data-contact="'+esc(o.id)+'">Contacter l’auteur</button>'}${wa}<button class="btn ghost${myLikes.has(String(o.id))?' faved':''}" data-like="${esc(o.id)}">${myLikes.has(String(o.id))?'❤️':'🤍'} ${likeCount[String(o.id)]||0}</button><button class="btn ghost" data-comment="${esc(o.id)}">💬 ${comCount[String(o.id)]||0}</button><button class="btn ghost" data-share="${esc(o.id)}">🔗 Partager</button><button class="btn ghost${faved?' faved':''}" data-fav="${esc(o.id)}">${faved?'🔖 Enregistré':'🔖 Enregistrer'}</button>${mine?'':'<button class="btn ghost" data-report="'+esc(o.id)+'">🚩 Signaler</button>'}${isAdmin&&!mine?'<button class="btn danger" data-admin-del="'+esc(o.id)+'">🛡️ Supprimer (admin)</button>':''}</div><div class="cbox hidden" data-cbox="${esc(o.id)}"></div></div></article>`;
  }).join(""):'<div class="empty">Aucun bon plan trouvé pour le moment.</div>';
  $("offers").querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>editOffer(b.dataset.edit));
  $("offers").querySelectorAll("[data-delete]").forEach(b=>b.onclick=()=>deleteOffer(b.dataset.delete));
  $("offers").querySelectorAll("[data-contact]").forEach(b=>b.onclick=()=>startConversation(b.dataset.contact));
  $("offers").querySelectorAll("[data-admin-del]").forEach(b=>b.onclick=()=>deleteOffer(b.dataset.adminDel,true));
  $("offers").querySelectorAll("[data-author]").forEach(b=>b.onclick=()=>{authorFilter=b.dataset.author;renderOffers();showAuthor(authorFilter);window.scrollTo({top:0})});
+ $("offers").querySelectorAll("[data-like]").forEach(b=>b.onclick=()=>toggleLike(b.dataset.like));
+ $("offers").querySelectorAll("[data-comment]").forEach(b=>b.onclick=()=>{const k=b.dataset.comment,box=document.querySelector(`[data-cbox="${CSS.escape(k)}"]`);if(openComments.has(k)){openComments.delete(k);box.classList.add("hidden")}else showComments(k)});
+ openComments.forEach(k=>showComments(k));
  $("offers").querySelectorAll("[data-share]").forEach(b=>b.onclick=()=>shareOffer(b.dataset.share));
  $("offers").querySelectorAll("[data-oid]").forEach(c=>{if(c.dataset.mine!=="1")io.observe(c)});
  $("offers").querySelectorAll("[data-fav]").forEach(b=>b.onclick=()=>toggleFav(b.dataset.fav));
