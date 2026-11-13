@@ -148,6 +148,8 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 .star{color:#f5b301}.star.off{color:#f5b301;opacity:.3}
 .avatar{border-radius:50%;object-fit:cover;vertical-align:middle}
 .cbox{margin-top:10px;border-top:1px solid var(--line);padding-top:10px}.cmt p{margin:4px 0 10px;overflow-wrap:anywhere}.cform{display:flex;gap:8px}.cform input{flex:1;min-width:0}
+.thumbs{display:flex;gap:6px;margin-bottom:8px}.thumb{width:44px;height:44px;object-fit:cover;border-radius:8px;cursor:zoom-in}
+#lightbox .lbnav{position:absolute;top:50%;left:10px;width:44px;height:44px;border-radius:50%;border:0;background:#fffd;color:#101b35;font-size:26px;font-weight:900;z-index:1}#lightbox .lbnav.next{left:auto;right:10px}
 </style>
 </head>
 <body>
@@ -236,6 +238,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 <label class="full">Numéro WhatsApp (facultatif)<input name="whatsapp" type="tel" maxlength="20" placeholder="Ex. +228 90 00 00 00"><span class="note">Avec l'indicatif du pays. Les acheteurs pourront t'écrire directement.</span></label>
 <label class="full">Lien utile (facultatif)<input name="url" type="url" placeholder="https://…"></label>
 <label class="full">Photo de l’article (facultatif)<input id="offerImage" name="image" type="file" accept="image/jpeg,image/png,image/webp"><span class="note">Formats JPG, PNG ou WebP · 5 Mo maximum.</span><img id="imagePreview" class="photo-preview hidden" alt="Aperçu de la photo sélectionnée"></label>
+<label class="full">Photos supplémentaires (jusqu'à 4, facultatif)<input id="offerImagesExtra" type="file" accept="image/jpeg,image/png,image/webp" multiple><span class="note">Si tu en choisis, elles remplacent les anciennes.</span></label>
 <div class="formend"><span class="note">Tu dois être connecté pour publier un bon plan.</span><div><button class="btn ghost hidden" id="cancelEdit" type="button">Annuler</button> <button class="btn dark" type="submit">Publier le bon plan</button></div></div>
 </form>
 </section>
@@ -259,7 +262,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 </section>
 </main>
 <footer>AFRIKA PULSE · Prototype connecté · Vérifie toujours les offres avant d'acheter.</footer>
-<div id="lightbox" role="dialog" aria-modal="true" aria-label="Photo agrandie"><button class="lbclose" id="lbClose" type="button" aria-label="Fermer">✕</button><div class="lbwrap"><img id="lbImg" alt=""></div><div class="lbcap" id="lbCap"></div></div>
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="Photo agrandie"><button class="lbnav hidden" id="lbPrev" type="button" aria-label="Photo précédente">‹</button><button class="lbnav next hidden" id="lbNext" type="button" aria-label="Photo suivante">›</button><button class="lbclose" id="lbClose" type="button" aria-label="Fermer">✕</button><div class="lbwrap"><img id="lbImg" alt=""></div><div class="lbcap" id="lbCap"></div></div>
 <section class="panel hidden textpage" id="aboutPanel"><div class="eyebrow">À propos</div><h2>AFRIKA PULSE</h2>
 <p>AFRIKA PULSE est un site gratuit où chacun peut trouver et publier des bons plans, offres, services et opportunités près de chez lui en Afrique.</p>
 <h3>Notre objectif</h3><p>Rapprocher les vendeurs, les commerçants et les acheteurs de manière simple, rapide et sans frais pour les particuliers.</p>
@@ -339,7 +342,18 @@ function toast(msg){const t=$("toast");t.textContent=msg;t.style.display="block"
  const lb=$("lightbox"),img=$("lbImg");
  function open(src,alt){img.src=src;img.alt=alt||"";$("lbCap").textContent=alt||"";lb.classList.remove("zoomed");lb.classList.add("open");document.body.style.overflow="hidden"}
  function close(){lb.classList.remove("open","zoomed");img.src="";document.body.style.overflow=""}
- document.addEventListener("click",e=>{const t=e.target.closest("img.offer-photo, img.photo-preview");if(t&&t.src)open(t.src,t.alt)});
+ let gal=[],gi=0;
+ const nav=()=>{$("lbPrev").classList.toggle("hidden",gal.length<2);$("lbNext").classList.toggle("hidden",gal.length<2)};
+ const show=i=>{gi=(i+gal.length)%gal.length;img.src=gal[gi]};
+ $("lbPrev").onclick=e=>{e.stopPropagation();show(gi-1)};
+ $("lbNext").onclick=e=>{e.stopPropagation();show(gi+1)};
+ document.addEventListener("keydown",e=>{if(!lb.classList.contains("open")||gal.length<2)return;if(e.key==="ArrowLeft")show(gi-1);if(e.key==="ArrowRight")show(gi+1)});
+ document.addEventListener("click",e=>{
+  const t=e.target.closest("img.offer-photo, img.photo-preview, img.thumb");if(!t||!t.src)return;
+  const o=t.dataset.gallery?allOffers.find(x=>String(x.id)===t.dataset.gallery):null;
+  gal=o&&Array.isArray(o.images)&&o.images.length?[o.image_url,...o.images]:[];gi=Number(t.dataset.i)||0;
+  open(gal.length?gal[gi]:t.src,t.alt);nav();
+ });
  img.addEventListener("click",()=>lb.classList.toggle("zoomed"));
  lb.addEventListener("click",e=>{if(e.target===lb||e.target.classList.contains("lbwrap"))close()});
  $("lbClose").addEventListener("click",close);
@@ -538,8 +552,8 @@ $("profileForm").addEventListener("submit",async e=>{
  const file=fd.get("avatar");
  if(file&&file.size){
   if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>5*1024*1024)return toast("Choisis une image JPG, PNG ou WebP de 5 Mo maximum.");
-  try{const ext=file.type==="image/png"?"png":file.type==="image/webp"?"webp":"jpg",path=`${currentUser.id}/avatar-${crypto.randomUUID()}.${ext}`;
-   const up=await db.storage.from("offer-images").upload(path,file,{contentType:file.type});if(up.error)throw up.error;
+  try{const small=await shrinkImage(file,512);const ext=small.type==="image/png"?"png":small.type==="image/webp"?"webp":"jpg",path=`${currentUser.id}/avatar-${crypto.randomUUID()}.${ext}`;
+   const up=await db.storage.from("offer-images").upload(path,small,{contentType:small.type});if(up.error)throw up.error;
    row.avatar_url=db.storage.from("offer-images").getPublicUrl(path).data.publicUrl;
    const p=$("avatarPreview");p.src=row.avatar_url;p.classList.remove("hidden");
   }catch(err){return toast("Envoi de la photo impossible : "+(err.message||err))}
@@ -585,7 +599,7 @@ async function showComments(k){
   e.preventDefault();if(!requireLogin())return;
   const text=e.currentTarget.querySelector("input").value.trim();if(!text)return;
   const {error}=await db.from("comments").insert({offer_id:k,content:text});
-  if(error)return toast("Commentaire impossible pour le moment.");
+  if(error)return toast(/^limite/i.test(error.message||"")?error.message:"Commentaire impossible pour le moment.");
   await loadReactions();renderOffers();
  };
 }
@@ -651,6 +665,7 @@ function siteLanguage(){
  return (document.documentElement.lang||"fr").toLowerCase().startsWith("en")?"en":"fr";
 }
 function localizedError(err){
+ if(/^limite/i.test(String(err?.message||"")))return err.message;
  const en=siteLanguage()==="en";
  const code=String(err?.code||err?.status||"").toLowerCase();
  const raw=String(err?.message||err||"").toLowerCase();
@@ -679,7 +694,7 @@ function localizedError(err){
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function safeUrl(v){try{const u=new URL(v);return ["http:","https:"].includes(u.protocol)?u.href:""}catch{return ""}}
 function resetOfferEditor(){
- const form=$("offerForm");form.reset();form.elements.id.value="";editingImageUrl="";
+ const form=$("offerForm");form.reset();form.elements.id.value="";editingImageUrl="";editingImages=[];$("offerImagesExtra").value="";
  $("imagePreview").src="";$("imagePreview").classList.add("hidden");
  $("formHeading").textContent="Tu connais un bon plan ? Partage-le.";$("cancelEdit").classList.add("hidden");
 }
@@ -689,8 +704,17 @@ $("offerImage").addEventListener("change",()=>{
  if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>5*1024*1024){toast("Choisis une image JPG, PNG ou WebP de 5 Mo maximum.");$("offerImage").value="";return}
  preview.src=URL.createObjectURL(file);preview.classList.remove("hidden");
 });
+async function shrinkImage(file,max){
+ try{const bmp=await createImageBitmap(file),r=Math.min(1,max/Math.max(bmp.width,bmp.height)),c=document.createElement("canvas");
+  c.width=Math.round(bmp.width*r);c.height=Math.round(bmp.height*r);c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+  const blob=await new Promise(res=>c.toBlob(res,"image/webp",.82));
+  if(!blob||blob.size>=file.size)return file;
+  return new File([blob],"photo.webp",{type:"image/webp"});
+ }catch(e){return file}
+}
 async function uploadOfferImage(file){
  if(!file)return editingImageUrl||null;
+ file=await shrinkImage(file,1280);
  const ext=file.type==="image/png"?"png":file.type==="image/webp"?"webp":"jpg";
  const path=`${currentUser.id}/${crypto.randomUUID()}.${ext}`;
  const {error}=await db.storage.from("offer-images").upload(path,file,{contentType:file.type,upsert:false});
@@ -848,7 +872,8 @@ if(db)db.auth.onAuthStateChange(async(_event,session)=>{currentUser=session?.use
 async function loadOffers(){
  if(!db)return refreshSession();
  $("offers").innerHTML='<div class="empty">Chargement…</div>';
- const {data,error}=await db.from("bons_plans").select("*").eq("status","approved").order("created_at",{ascending:false});
+ let {data,error}=await db.from("bons_plans").select("*").eq("status","approved").or("expires_at.is.null,expires_at.gt."+new Date().toISOString()).order("created_at",{ascending:false});
+ if(error&&/expires_at/i.test(error.message||""))({data,error}=await db.from("bons_plans").select("*").eq("status","approved").order("created_at",{ascending:false}));
  if(error){$("offers").innerHTML=`<div class="empty">${siteLanguage()==="en"?"Unable to load deals: ":"Impossible de charger les bons plans : "}${esc(localizedError(error))}</div>`;return}
  allOffers=data||[];
  try{const ids=[...new Set(allOffers.map(o=>o.user_id).filter(Boolean))];if(ids.length){let r=await db.from("profiles").select("id,username,city,avatar_url").in("id",ids);if(r.error)r=await db.from("profiles").select("id,username,city").in("id",ids);if(r.error)r=await db.from("profiles").select("id,username").in("id",ids);(r.data||[]).forEach(p=>{profiles[p.id]=p.username;profCity[p.id]=p.city||"";profAvatar[p.id]=p.avatar_url||""})}}catch(e){}
@@ -858,7 +883,7 @@ async function loadOffers(){
  if(dp&&!deepDone){deepDone=true;offerFilter=dp;const b=$("authorBanner");b.innerHTML=`Tu vois une annonce partagée. <button class="linkbtn" id="seeAll" type="button">Voir toutes les annonces</button>`;b.classList.remove("hidden");$("seeAll").onclick=()=>{offerFilter=null;b.classList.add("hidden");history.replaceState(null,"",location.pathname+location.hash);renderOffers()}}
  renderOffers();
 }
-let authorFilter=null,offerFilter=null,deepDone=false,myCity="",profileFor=null;const profiles={},profCity={},profAvatar={};
+let editingImages=[],shownCount=12,lastSig="",authorFilter=null,offerFilter=null,deepDone=false,myCity="",profileFor=null;const profiles={},profCity={},profAvatar={};
 const avatarImg=(uid,n)=>profAvatar[uid]?`<img class="avatar" src="${esc(profAvatar[uid])}" width="${n}" height="${n}" alt="">`:"👤";
 function favKey(){return "ap-fav:"+(currentUser?currentUser.id:"guest")}
 function favs(){try{return new Set(JSON.parse(localStorage.getItem(favKey())||"[]").map(String))}catch(e){return new Set()}}
@@ -891,14 +916,18 @@ function renderOffers(){
  items=[...items].sort((a,b)=>(b.featured?1:0)-(a.featured?1:0));
  if(offerFilter)items=items.filter(o=>String(o.id)===offerFilter);
  if(category==="Populaires")items=[...items].sort((a,b)=>(b.views||0)-(a.views||0));
+ const sig=[category,q,city,$("sortSelect").value,authorFilter,offerFilter].join("|");
+ if(sig!==lastSig){shownCount=12;lastSig=sig}
+ const visible=items.slice(0,shownCount);
  $("count").textContent=items.length+" bon(s) plan(s) affiché(s)";
- $("offers").innerHTML=items.length?items.map(o=>{
+ $("offers").innerHTML=items.length?visible.map(o=>{
  const link=safeUrl(o.url),mine=currentUser&&o.user_id===currentUser.id,waNum=String(o.whatsapp||"").replace(/\D/g,""),faved=favSet.has(String(o.id));
  const wa=waNum.length>=8&&waNum.length<=15?`<a class="btn wa" href="https://wa.me/${waNum}?text=${encodeURIComponent("Bonjour, je suis intéressé(e) par « "+o.title+" » sur AFRIKA PULSE.")}" target="_blank" rel="noopener noreferrer">💬 WhatsApp</a>`:"";
- return `<article class="card${o.sold?' sold':''}" data-oid="${esc(o.id)}" data-mine="${mine?1:0}">${o.image_url?`<img class="offer-photo" src="${esc(o.image_url)}" alt="Photo de ${esc(o.title)}" loading="lazy">`:`<div class="visual"><span class="tag">${esc(o.category)}</span><span>${esc(icons[o.category]||"✨")}</span></div>`}<div class="cardbody"><h3>${o.featured?'⭐ ':''}${esc(o.title)}${o.sold?'<span class="badge-sold">VENDU</span>':''}</h3><p class="desc">${esc(o.description)}</p><div class="price">${esc(o.price||"Voir les détails")}</div><div class="meta"><span>📍 ${esc(o.place)}</span><span>👁 ${o.views||0}</span><span>${o.user_id?`<button class="linkbtn" data-author="${esc(o.user_id)}" type="button">${avatarImg(o.user_id,22)} ${esc(profiles[o.user_id]||"Membre")}</button>`:"Communauté"}</span></div>${link?`<a class="btn ghost" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Voir l'offre ↗</a>`:""}<div class="cardactions">${mine?'<button class="btn ghost" data-edit="'+esc(o.id)+'">Modifier</button><button class="btn danger" data-delete="'+esc(o.id)+'">Supprimer</button>':'<button class="btn dark" data-contact="'+esc(o.id)+'">Contacter l’auteur</button>'}${wa}<button class="btn ghost${myLikes.has(String(o.id))?' faved':''}" data-like="${esc(o.id)}">${myLikes.has(String(o.id))?'❤️':'🤍'} ${likeCount[String(o.id)]||0}</button><button class="btn ghost" data-comment="${esc(o.id)}">💬 ${comCount[String(o.id)]||0}</button><button class="btn ghost" data-share="${esc(o.id)}">🔗 Partager</button><button class="btn ghost${faved?' faved':''}" data-fav="${esc(o.id)}">${faved?'🔖 Enregistré':'🔖 Enregistrer'}</button>${mine?'':'<button class="btn ghost" data-report="'+esc(o.id)+'">🚩 Signaler</button>'}${isAdmin&&!mine?'<button class="btn danger" data-admin-del="'+esc(o.id)+'">🛡️ Supprimer (admin)</button>':''}</div><div class="cbox hidden" data-cbox="${esc(o.id)}"></div></div></article>`;
+ return `<article class="card${o.sold?' sold':''}" data-oid="${esc(o.id)}" data-mine="${mine?1:0}">${o.image_url?`<img class="offer-photo" src="${esc(o.image_url)}" data-gallery="${esc(o.id)}" data-i="0" alt="Photo de ${esc(o.title)}" loading="lazy">`:`<div class="visual"><span class="tag">${esc(o.category)}</span><span>${esc(icons[o.category]||"✨")}</span></div>`}<div class="cardbody">${(o.image_url&&Array.isArray(o.images)&&o.images.length)?`<div class="thumbs">${[o.image_url,...o.images].map((u,i)=>`<img class="thumb" src="${esc(u)}" data-gallery="${esc(o.id)}" data-i="${i}" alt="" loading="lazy">`).join("")}</div>`:""}<h3>${o.featured?'⭐ ':''}${esc(o.title)}${o.sold?'<span class="badge-sold">VENDU</span>':''}</h3><p class="desc">${esc(o.description)}</p><div class="price">${esc(o.price||"Voir les détails")}</div><div class="meta"><span>📍 ${esc(o.place)}</span><span>👁 ${o.views||0}</span><span>${o.user_id?`<button class="linkbtn" data-author="${esc(o.user_id)}" type="button">${avatarImg(o.user_id,22)} ${esc(profiles[o.user_id]||"Membre")}</button>`:"Communauté"}</span></div>${link?`<a class="btn ghost" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Voir l'offre ↗</a>`:""}<div class="cardactions">${mine?'<button class="btn ghost" data-edit="'+esc(o.id)+'">Modifier</button><button class="btn danger" data-delete="'+esc(o.id)+'">Supprimer</button>':'<button class="btn dark" data-contact="'+esc(o.id)+'">Contacter l’auteur</button>'}${wa}<button class="btn ghost${myLikes.has(String(o.id))?' faved':''}" data-like="${esc(o.id)}">${myLikes.has(String(o.id))?'❤️':'🤍'} ${likeCount[String(o.id)]||0}</button><button class="btn ghost" data-comment="${esc(o.id)}">💬 ${comCount[String(o.id)]||0}</button><button class="btn ghost" data-share="${esc(o.id)}">🔗 Partager</button><button class="btn ghost${faved?' faved':''}" data-fav="${esc(o.id)}">${faved?'🔖 Enregistré':'🔖 Enregistrer'}</button>${mine?'':'<button class="btn ghost" data-report="'+esc(o.id)+'">🚩 Signaler</button>'}${isAdmin&&!mine?'<button class="btn danger" data-admin-del="'+esc(o.id)+'">🛡️ Supprimer (admin)</button>':''}</div><div class="cbox hidden" data-cbox="${esc(o.id)}"></div></div></article>`;
  }).join(""):'<div class="empty">Aucun bon plan trouvé pour le moment.</div>';
  $("offers").querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>editOffer(b.dataset.edit));
  $("offers").querySelectorAll("[data-delete]").forEach(b=>b.onclick=()=>deleteOffer(b.dataset.delete));
+ if(items.length>shownCount){const w=document.createElement("div");w.className="empty";w.style.gridColumn="1/-1";w.innerHTML=`<button class="btn dark" id="moreBtn" type="button">Voir plus d'annonces (${items.length-shownCount})</button>`;$("offers").appendChild(w);$("moreBtn").onclick=()=>{shownCount+=12;renderOffers()}}
  $("offers").querySelectorAll("[data-contact]").forEach(b=>b.onclick=()=>startConversation(b.dataset.contact));
  $("offers").querySelectorAll("[data-admin-del]").forEach(b=>b.onclick=()=>deleteOffer(b.dataset.adminDel,true));
  $("offers").querySelectorAll("[data-author]").forEach(b=>b.onclick=()=>{authorFilter=b.dataset.author;renderOffers();showAuthor(authorFilter);window.scrollTo({top:0})});
@@ -917,12 +946,22 @@ $("offerForm").addEventListener("submit",async e=>{
  const file=$("offerImage").files[0];
  let imageUrl;
  try{imageUrl=await uploadOfferImage(file)}catch(err){toast("Échec de l’envoi de la photo : "+err.message);return}
+ let extras=editingImages;
+ const extraFiles=[...$("offerImagesExtra").files].slice(0,4);
+ if(extraFiles.length){
+  extras=[];
+  try{for(const ef of extraFiles){
+   if(!["image/jpeg","image/png","image/webp"].includes(ef.type)||ef.size>5*1024*1024)return toast("Photos supplémentaires : JPG, PNG ou WebP, 5 Mo maximum chacune.");
+   extras.push(await uploadOfferImage(ef));
+  }}catch(err){toast("Échec de l’envoi des photos : "+err.message);return}
+ }
  const wnum=String(f.get("whatsapp")||"").trim();
- const payload={...(wnum?{whatsapp:wnum}:{}),title:String(f.get("title")).trim(),category:String(f.get("category")),place:String(f.get("place")).trim(),price:String(f.get("price")).trim(),description:String(f.get("description")).trim(),url:safeUrl(String(f.get("url")).trim()),image_url:imageUrl,status:"approved",updated_at:new Date().toISOString()};
+ const payload={...(wnum?{whatsapp:wnum}:{}),...(extras.length||editingImages.length?{images:extras}:{}),title:String(f.get("title")).trim(),category:String(f.get("category")),place:String(f.get("place")).trim(),price:String(f.get("price")).trim(),description:String(f.get("description")).trim(),url:safeUrl(String(f.get("url")).trim()),image_url:imageUrl,status:"approved",updated_at:new Date().toISOString()};
  let result,waLost=false;
  const save=()=>id?db.from("bons_plans").update(payload).eq("id",id).eq("user_id",currentUser.id):db.from("bons_plans").insert({...payload,user_id:currentUser.id});
  result=await save();
  if(result.error&&payload.whatsapp&&/whatsapp/i.test(result.error.message||"")){delete payload.whatsapp;waLost=true;result=await save()}
+ if(result.error&&payload.images&&/images/i.test(result.error.message||"")){delete payload.images;result=await save()}
  if(result.error){toast(localizedError(result.error));return}
  resetOfferEditor();
  toast(waLost?"Publié, mais le numéro WhatsApp n'est pas encore activé sur le site.":id?"Bon plan modifié et publié.":"Bon plan publié automatiquement.");
@@ -931,7 +970,12 @@ $("offerForm").addEventListener("submit",async e=>{
 async function loadMyPosts(){
  const {data,error}=await db.from("bons_plans").select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false});
  if(error){$("myPosts").innerHTML='<div class="empty">'+esc(localizedError(error))+'</div>';return}
- $("myPosts").innerHTML=(data||[]).length?data.map(o=>`<article class="card"><div class="cardbody"><span class="status ${o.status}">${o.status==="approved"?"Publié":o.status==="rejected"?"Refusé":"En attente"}</span><h3>${esc(o.title)}</h3><p class="desc">${esc(o.description)}</p><div class="cardactions"><button class="btn light" data-mysold="${esc(o.id)}" data-sold="${o.sold?1:0}">${o.sold?"Remettre en vente":"Marquer vendue"}</button><button class="btn ghost" data-myedit="${esc(o.id)}">Modifier</button><button class="btn danger" data-mydelete="${esc(o.id)}">Supprimer</button></div></div></article>`).join(""):'<div class="empty">Tu n’as pas encore publié de bon plan.</div>';
+ $("myPosts").innerHTML=(data||[]).length?data.map(o=>`<article class="card"><div class="cardbody"><span class="status ${o.status}">${o.status==="approved"?"Publié":o.status==="rejected"?"Refusé":"En attente"}</span>${o.expires_at?(new Date(o.expires_at)<new Date()?' <span class="badge-sold">EXPIRÉE</span>':' <span class="muted">· expire le '+new Date(o.expires_at).toLocaleDateString("fr-FR")+'</span>'):""}<h3>${esc(o.title)}</h3><p class="desc">${esc(o.description)}</p><div class="cardactions"><button class="btn light" data-myrenew="${esc(o.id)}">Renouveler 30 jours</button><button class="btn light" data-mysold="${esc(o.id)}" data-sold="${o.sold?1:0}">${o.sold?"Remettre en vente":"Marquer vendue"}</button><button class="btn ghost" data-myedit="${esc(o.id)}">Modifier</button><button class="btn danger" data-mydelete="${esc(o.id)}">Supprimer</button></div></div></article>`).join(""):'<div class="empty">Tu n’as pas encore publié de bon plan.</div>';
+ $("myPosts").querySelectorAll("[data-myrenew]").forEach(b=>b.onclick=async()=>{
+  const {data:d,error:er}=await db.from("bons_plans").update({expires_at:new Date(Date.now()+30*864e5).toISOString()}).eq("id",b.dataset.myrenew).eq("user_id",currentUser.id).select();
+  if(er||!d||!d.length)return toast("Renouvellement impossible pour le moment.");
+  toast("Annonce renouvelée pour 30 jours.");await loadOffers();await loadMyPosts();
+ });
  $("myPosts").querySelectorAll("[data-mysold]").forEach(b=>b.onclick=async()=>{
   const {data:d,error:er}=await db.from("bons_plans").update({sold:b.dataset.sold!=="1"}).eq("id",b.dataset.mysold).eq("user_id",currentUser.id).select();
   if(er)return toast("Erreur : "+(er.message||er.code));
@@ -961,7 +1005,7 @@ async function editOffer(id){
  const {data,error}=await db.from("bons_plans").select("*").eq("id",id).single();
  if(error)return toast(localizedError(error));if(data.user_id!==currentUser.id)return toast("Cette publication ne t'appartient pas.");
  const form=$("offerForm");["id","title","category","place","price","description","url","whatsapp"].forEach(k=>form.elements[k].value=data[k]??"");
- editingImageUrl=data.image_url||"";$("imagePreview").src=editingImageUrl;$("imagePreview").classList.toggle("hidden",!editingImageUrl);
+ editingImageUrl=data.image_url||"";editingImages=Array.isArray(data.images)?data.images:[];$("imagePreview").src=editingImageUrl;$("imagePreview").classList.toggle("hidden",!editingImageUrl);
  $("formHeading").textContent="Modifier ton bon plan";$("cancelEdit").classList.remove("hidden");goTo("publier",{load:false});
 }
 $("cancelEdit").onclick=resetOfferEditor;
