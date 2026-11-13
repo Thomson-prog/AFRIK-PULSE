@@ -242,7 +242,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 
 <section class="panel hidden" id="myPostsPanel"><div class="sectionhead"><div><div class="eyebrow">Espace personnel</div><h2>Mes publications</h2></div><button class="btn ghost" data-close="myPostsPanel">Fermer</button></div><div class="grid" id="myPosts"></div></section>
 
-<section class="panel hidden" id="adminPanel"><div class="sectionhead"><div><div class="eyebrow">Espace administrateur</div><h2>Toutes les publications</h2><p class="muted">Tu peux supprimer ici toute publication inappropriée.</p></div><button class="btn ghost" data-close="adminPanel">Fermer</button></div><div class="grid" id="adminPosts"></div><h2 style="margin-top:30px">Messages du support</h2><div id="supportList" class="supportlist">Chargement…</div></section>
+<section class="panel hidden" id="adminPanel"><div class="sectionhead"><div><div class="eyebrow">Espace administrateur</div><h2>Toutes les publications</h2><p class="muted">Tu peux supprimer ici toute publication inappropriée.</p></div><button class="btn ghost" data-close="adminPanel">Fermer</button></div><div class="grid" id="adminPosts"></div><h2 style="margin-top:30px">Signalements</h2><div id="reportList" class="supportlist">Chargement…</div><h2 style="margin-top:30px">Membres</h2><div id="memberList" class="supportlist">Chargement…</div><h2 style="margin-top:30px">Messages du support</h2><div id="supportList" class="supportlist">Chargement…</div></section>
 
 <section class="panel hidden" id="supportPanel"><div class="eyebrow">Besoin d'aide ?</div><h2>Contacter le support</h2>
 <p class="muted">Décris ton problème (connexion, annonce, signalement…). Nous te répondrons par e-mail dès que possible.</p>
@@ -525,6 +525,7 @@ async function showAuthor(uid){
 }
 async function loadMyProfile(){
  if(!currentUser||profileFor===currentUser.id)return;profileFor=currentUser.id;
+ db.from("blocked_users").select("user_id").eq("user_id",currentUser.id).maybeSingle().then(r=>{if(r&&r.data)toast("Ton compte est suspendu : tu ne peux plus publier ni écrire.")},()=>{});
  let {data,error:pe}=await db.from("profiles").select("username,city,avatar_url").eq("id",currentUser.id).maybeSingle();
  if(pe)({data}=await db.from("profiles").select("username,city").eq("id",currentUser.id).maybeSingle());
  if(data&&data.avatar_url){const p=$("avatarPreview");p.src=data.avatar_url;p.classList.remove("hidden")}
@@ -587,6 +588,39 @@ async function showComments(k){
   if(error)return toast("Commentaire impossible pour le moment.");
   await loadReactions();renderOffers();
  };
+}
+
+// ===== Administration : signalements et membres =====
+async function loadReports(){
+ const box=$("reportList");
+ const {data,error}=await db.from("signalements").select("*").eq("resolved",false).order("created_at",{ascending:false}).limit(50);
+ if(error){box.textContent="Signalements indisponibles (lance le code Supabase de cette version).";return}
+ const list=data||[];if(!list.length){box.textContent="Aucun signalement en attente.";return}
+ const oids=[...new Set(list.map(r=>r.offer_id))],uids=[...new Set(list.map(r=>r.user_id))];
+ const [o,p]=await Promise.all([db.from("bons_plans").select("id,title,user_id").in("id",oids),db.from("profiles").select("id,username").in("id",uids)]);
+ const ot={};(o.data||[]).forEach(x=>ot[String(x.id)]=x);(p.data||[]).forEach(x=>profiles[x.id]=x.username);
+ box.innerHTML=list.map(r=>{const off=ot[r.offer_id];return `<div class="sitem"><h4>${off?esc(off.title):"Annonce déjà supprimée"}</h4><div class="meta"><span>Signalé par ${esc(profiles[r.user_id]||"Membre")}</span><span>${new Date(r.created_at).toLocaleString("fr-FR")}</span></div><p>${esc(r.reason)}</p>${off?`<button class="btn danger" data-rdel="${esc(r.offer_id)}" type="button">Supprimer l'annonce</button> `:""}<button class="btn ghost" data-rok="${esc(r.id)}" type="button">Classer sans suite</button></div>`}).join("");
+ box.querySelectorAll("[data-rok]").forEach(b=>b.onclick=async()=>{await db.from("signalements").update({resolved:true}).eq("id",b.dataset.rok);loadReports()});
+ box.querySelectorAll("[data-rdel]").forEach(b=>b.onclick=async()=>{
+  await deleteOffer(b.dataset.rdel,true);
+  const {data:still}=await db.from("bons_plans").select("id").eq("id",b.dataset.rdel).maybeSingle();
+  if(!still)await db.from("signalements").update({resolved:true}).eq("offer_id",b.dataset.rdel);
+  loadReports();
+ });
+}
+async function loadMembers(){
+ const box=$("memberList");
+ const [p,b]=await Promise.all([db.from("profiles").select("id,username,city").limit(200),db.from("blocked_users").select("user_id")]);
+ if(p.error){box.textContent="Liste indisponible.";return}
+ const blocked=new Set((b.data||[]).map(x=>x.user_id)),cnt={};allOffers.forEach(o=>cnt[o.user_id]=(cnt[o.user_id]||0)+1);
+ box.innerHTML=(p.data||[]).map(m=>`<div class="sitem"><h4>${esc(m.username||"Membre")}${blocked.has(m.id)?' <span class="badge-sold">BLOQUÉ</span>':""}</h4><div class="meta"><span>${m.city?"📍 "+esc(m.city):"Ville non indiquée"}</span><span>${cnt[m.id]||0} annonce(s)</span></div>${m.id===currentUser.id?"":`<button class="btn ${blocked.has(m.id)?"ghost":"danger"}" data-block="${esc(m.id)}" data-on="${blocked.has(m.id)?1:0}" type="button">${blocked.has(m.id)?"Débloquer":"Bloquer"}</button>`}</div>`).join("")||"Aucun membre.";
+ box.querySelectorAll("[data-block]").forEach(btn=>btn.onclick=async()=>{
+  const id=btn.dataset.block,on=btn.dataset.on==="1";
+  if(!on&&!confirm("Bloquer ce membre ? Il ne pourra plus publier, commenter ni écrire."))return;
+  const r=on?await db.from("blocked_users").delete().eq("user_id",id):await db.from("blocked_users").insert({user_id:id});
+  if(r.error)return toast("Action impossible : lance le code Supabase de cette version.");
+  toast(on?"Membre débloqué.":"Membre bloqué.");loadMembers();
+ });
 }
 // ===== Thème clair / sombre (préférence propre à chaque utilisateur) =====
 const Theme={
@@ -909,7 +943,7 @@ async function loadMyPosts(){
 }
 async function loadAdminPosts(){
  if(!requireLogin()||!isAdmin)return;
- loadSupportList();
+ loadSupportList();loadReports();loadMembers();
  const {data,error}=await db.from("bons_plans").select("*").order("created_at",{ascending:false});
  if(error){$("adminPosts").innerHTML='<div class="empty">'+esc(localizedError(error))+'</div>';return}
  $("adminPosts").innerHTML=(data||[]).length?data.map(o=>`<article class="card">${o.image_url?`<img class="offer-photo" src="${esc(o.image_url)}" alt="Photo de ${esc(o.title)}" loading="lazy">`:''}<div class="cardbody"><span class="status ${esc(o.status)}">${o.status==="approved"?"Publié":o.status==="rejected"?"Refusé":"En attente"}</span><h3>${esc(o.title)}</h3><p class="desc">${esc(o.description)}</p><div class="meta"><span>📍 ${esc(o.place)}</span><span>Auteur : ${esc(o.user_id)}</span></div><div class="cardactions"><button class="btn light" data-feature="${esc(o.id)}" data-on="${o.featured?1:0}">${o.featured?"Retirer ⭐":"Mettre en avant ⭐"}</button><button class="btn danger" data-admin-delete="${esc(o.id)}">Supprimer cette publication</button></div></div></article>`).join(""):'<div class="empty">Aucune publication.</div>';
