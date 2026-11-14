@@ -151,6 +151,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 .thumbs{display:flex;gap:6px;margin-bottom:8px}.thumb{width:44px;height:44px;object-fit:cover;border-radius:8px;cursor:zoom-in}
 #lightbox .lbnav{position:absolute;top:50%;left:10px;width:44px;height:44px;border-radius:50%;border:0;background:#fffd;color:#101b35;font-size:26px;font-weight:900;z-index:1}#lightbox .lbnav.next{left:auto;right:10px}
 body.profile-view #homeView .sectionhead,body.profile-view #filters,body.profile-view .filtertools{display:none}
+.adimg{width:100%;max-height:180px;object-fit:cover;border-radius:14px;display:block}#adSlot{margin:0 0 16px}body.profile-view #adSlot{display:none}
 </style>
 </head>
 <body>
@@ -223,6 +224,7 @@ body.profile-view #homeView .sectionhead,body.profile-view #filters,body.profile
 <button class="chip active" data-category="Tous">Tout voir</button><button class="chip" data-category="Alimentation">🍲 Alimentation</button><button class="chip" data-category="Mode">👟 Mode</button><button class="chip" data-category="Technologie">📱 Technologie</button><button class="chip" data-category="Services">🛠️ Services</button><button class="chip" data-category="Formation">🎓 Formation</button><button class="chip" data-category="Favoris">🔖 Enregistrés</button><button class="chip" data-category="Populaires">🔥 Populaires</button>
 </div>
 <div class="filtertools"><select id="cityFilter" aria-label="Filtrer par ville"><option value="">📍 Toutes les villes</option></select><select id="sortSelect" aria-label="Trier"><option value="recent">Plus récents</option><option value="asc">Prix croissant</option><option value="desc">Prix décroissant</option></select><button class="btn light" id="nearBtn" type="button">📍 Autour de moi</button></div>
+<div id="adSlot" class="hidden"></div>
 <div id="authorBanner" class="panel hidden" style="margin:0 0 16px"></div>
 <section class="grid" id="offers" aria-live="polite"><div class="empty">Connexion à la base de données…</div></section>
 </div>
@@ -247,7 +249,10 @@ body.profile-view #homeView .sectionhead,body.profile-view #filters,body.profile
 
 <section class="panel hidden" id="myPostsPanel"><div class="sectionhead"><div><div class="eyebrow">Espace personnel</div><h2>Mes publications</h2></div><button class="btn ghost" data-close="myPostsPanel">Fermer</button></div><div class="grid" id="myPosts"></div></section>
 
-<section class="panel hidden" id="adminPanel"><div class="sectionhead"><div><div class="eyebrow">Espace administrateur</div><h2>Toutes les publications</h2><p class="muted">Tu peux supprimer ici toute publication inappropriée.</p></div><button class="btn ghost" data-close="adminPanel">Fermer</button></div><div class="grid" id="adminPosts"></div><h2 style="margin-top:30px">Signalements</h2><div id="reportList" class="supportlist">Chargement…</div><h2 style="margin-top:30px">Membres</h2><div id="memberList" class="supportlist">Chargement…</div><h2 style="margin-top:30px">Messages du support</h2><div id="supportList" class="supportlist">Chargement…</div></section>
+<section class="panel hidden" id="adminPanel"><div class="sectionhead"><div><div class="eyebrow">Espace administrateur</div><h2>Toutes les publications</h2><p class="muted">Tu peux supprimer ici toute publication inappropriée.</p></div><button class="btn ghost" data-close="adminPanel">Fermer</button></div><div class="grid" id="adminPosts"></div><h2 style="margin-top:30px">Bannières publicitaires</h2>
+<form id="bannerForm" class="fields" style="grid-template-columns:1fr;max-width:480px"><label class="full">Annonceur / titre<input name="title" required maxlength="80"></label><label class="full">Lien de la bannière (https://…)<input name="link" type="url" required></label><label class="full">Image<input name="image" type="file" accept="image/jpeg,image/png,image/webp" required></label><label class="full">Durée (jours)<input name="days" type="number" min="1" max="365" value="30"></label><button class="btn dark" type="submit">Ajouter la bannière</button></form>
+<div id="bannerList" class="supportlist"></div>
+<h2 style="margin-top:30px">Signalements</h2><div id="reportList" class="supportlist">Chargement…</div><h2 style="margin-top:30px">Membres</h2><div id="memberList" class="supportlist">Chargement…</div><h2 style="margin-top:30px">Messages du support</h2><div id="supportList" class="supportlist">Chargement…</div></section>
 
 <section class="panel hidden" id="notifPanel"><div class="eyebrow">Alertes</div><h2>Notifications</h2><div id="notifList" class="supportlist">Chargement…</div></section>
 <section class="panel hidden" id="supportPanel"><div class="eyebrow">Besoin d'aide ?</div><h2>Contacter le support</h2>
@@ -674,6 +679,43 @@ async function loadNotifs(){
  try{localStorage.setItem(notifSeenKey(),String(Date.now()))}catch(e){}
  notifUnread=0;showUnread(lastN,lastP);
 }
+
+// ===== Bannières publicitaires =====
+let banners=[],adIdx=0,adTimer=null;
+async function loadBanners(){
+ try{
+  const {data,error}=await db.from("banners").select("*").eq("active",true).or("expires_at.is.null,expires_at.gt."+new Date().toISOString()).order("created_at",{ascending:false});
+  banners=error?[]:(data||[]);
+ }catch(e){banners=[]}
+ showAd();
+}
+function showAd(){
+ clearInterval(adTimer);const slot=$("adSlot");
+ if(!banners.length){slot.classList.add("hidden");return}
+ const draw=()=>{const b=banners[adIdx%banners.length];adIdx++;slot.innerHTML=`<span class="note">Publicité</span><a href="${esc(safeUrl(b.link_url)||"#")}" target="_blank" rel="sponsored noopener noreferrer"><img class="adimg" src="${esc(b.image_url)}" alt="${esc(b.title)}"></a>`};
+ slot.classList.remove("hidden");draw();
+ if(banners.length>1)adTimer=setInterval(draw,8000);
+}
+async function loadBannerList(){
+ const box=$("bannerList");
+ const {data,error}=await db.from("banners").select("*").order("created_at",{ascending:false});
+ if(error){box.textContent="Bannières indisponibles (lance le code Supabase de cette version).";return}
+ box.innerHTML=(data||[]).map(b=>`<div class="sitem"><h4>${esc(b.title)} ${b.active?"":'<span class="badge-sold">INACTIVE</span>'}</h4><div class="meta"><span>${b.expires_at?"Expire le "+new Date(b.expires_at).toLocaleDateString("fr-FR"):"Sans date de fin"}</span></div><img src="${esc(b.image_url)}" alt="" style="max-width:100%;border-radius:10px;margin:8px 0"><br><button class="btn ghost" data-btoggle="${esc(b.id)}" data-on="${b.active?1:0}" type="button">${b.active?"Désactiver":"Activer"}</button> <button class="btn danger" data-bdel="${esc(b.id)}" type="button">Supprimer</button></div>`).join("")||"Aucune bannière.";
+ box.querySelectorAll("[data-btoggle]").forEach(b=>b.onclick=async()=>{await db.from("banners").update({active:b.dataset.on!=="1"}).eq("id",b.dataset.btoggle);await loadBannerList();loadBanners()});
+ box.querySelectorAll("[data-bdel]").forEach(b=>b.onclick=async()=>{if(!confirm("Supprimer cette bannière ?"))return;await db.from("banners").delete().eq("id",b.dataset.bdel);await loadBannerList();loadBanners()});
+}
+$("bannerForm").addEventListener("submit",async e=>{
+ e.preventDefault();if(!isAdmin)return;
+ const f=e.currentTarget,fd=new FormData(f),file=fd.get("image"),link=safeUrl(String(fd.get("link")).trim());
+ if(!link)return toast("Le lien de la bannière n'est pas valide.");
+ if(!file||!file.size||!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>5*1024*1024)return toast("Choisis une image JPG, PNG ou WebP de 5 Mo maximum.");
+ try{
+  const url=await uploadOfferImage(file),days=Math.max(1,Math.min(365,Number(fd.get("days"))||30));
+  const {error}=await db.from("banners").insert({title:String(fd.get("title")).trim(),image_url:url,link_url:link,active:true,expires_at:new Date(Date.now()+days*864e5).toISOString()});
+  if(error)throw error;
+  f.reset();toast("Bannière ajoutée.");await loadBannerList();loadBanners();
+ }catch(err){toast("Ajout impossible : "+(err.message||err))}
+});
 // ===== Thème clair / sombre (préférence propre à chaque utilisateur) =====
 const Theme={
  key(){return currentUser?`ap-theme:${currentUser.id}`:"ap-theme"},
@@ -920,6 +962,7 @@ async function loadOffers(){
  allOffers=data||[];
  try{const ids=[...new Set(allOffers.map(o=>o.user_id).filter(Boolean))];if(ids.length){let r=await db.from("profiles").select("id,username,city,avatar_url").in("id",ids);if(r.error)r=await db.from("profiles").select("id,username,city").in("id",ids);if(r.error)r=await db.from("profiles").select("id,username").in("id",ids);(r.data||[]).forEach(p=>{profiles[p.id]=p.username;profCity[p.id]=p.city||"";profAvatar[p.id]=p.avatar_url||""})}}catch(e){}
  await loadReactions();
+ loadBanners();
  fillCities();
  const dp=new URLSearchParams(location.search).get("offre");
  if(dp&&!deepDone){deepDone=true;offerFilter=dp;const b=$("authorBanner");b.innerHTML=`Tu vois une annonce partagée. <button class="linkbtn" id="seeAll" type="button">Voir toutes les annonces</button>`;b.classList.remove("hidden");$("seeAll").onclick=()=>{offerFilter=null;b.classList.add("hidden");history.replaceState(null,"",location.pathname+location.hash);renderOffers()}}
@@ -1029,7 +1072,7 @@ async function loadMyPosts(){
 }
 async function loadAdminPosts(){
  if(!requireLogin()||!isAdmin)return;
- loadSupportList();loadReports();loadMembers();
+ loadSupportList();loadReports();loadMembers();loadBannerList();
  const {data,error}=await db.from("bons_plans").select("*").order("created_at",{ascending:false});
  if(error){$("adminPosts").innerHTML='<div class="empty">'+esc(localizedError(error))+'</div>';return}
  $("adminPosts").innerHTML=(data||[]).length?data.map(o=>`<article class="card">${o.image_url?`<img class="offer-photo" src="${esc(o.image_url)}" alt="Photo de ${esc(o.title)}" loading="lazy">`:''}<div class="cardbody"><span class="status ${esc(o.status)}">${o.status==="approved"?"Publié":o.status==="rejected"?"Refusé":"En attente"}</span><h3>${esc(o.title)}</h3><p class="desc">${esc(o.description)}</p><div class="meta"><span>📍 ${esc(o.place)}</span><span>Auteur : ${esc(o.user_id)}</span></div><div class="cardactions"><button class="btn light" data-feature="${esc(o.id)}" data-on="${o.featured?1:0}">${o.featured?"Retirer ⭐":"Mettre en avant ⭐"}</button><button class="btn danger" data-admin-delete="${esc(o.id)}">Supprimer cette publication</button></div></div></article>`).join(""):'<div class="empty">Aucune publication.</div>';
